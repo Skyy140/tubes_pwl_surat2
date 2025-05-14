@@ -366,7 +366,7 @@
                     <div class="form sign-up">
                         <div class="input-group">
                             <i class='bx bxs-user'></i>
-                            <input type="text" placeholder="Username">
+                            <input type="text" placeholder="Nama Lengkap">
                         </div>
                         <div class="input-group">
                             <i class='bx bx-mail-send'></i>
@@ -380,9 +380,8 @@
                             <i class='bx bxs-lock-alt'></i>
                             <input type="password" placeholder="Confirm password">
                         </div>
-                        <button>
-                            Sign up
-                        </button>
+                        <p id="signUpMessage" style="color: red;"></p>
+                        <button type="button" onclick="signUpUser()">Sign up</button>
                         <p>
                             <span>
                                 Already have an account?
@@ -499,6 +498,49 @@
             } else {
                 messageBox.style.color = "red";
                 messageBox.textContent = result.message || "Login gagal.";
+            }
+        }
+    </script>
+
+    <script>
+        async function signUpUser() {
+            const username = document.querySelector(".sign-up input[placeholder='Username']").value;
+            const email = document.querySelector(".sign-up input[placeholder='Email']").value;
+            const password = document.querySelector(".sign-up input[placeholder='Password']").value;
+            const confirmPassword = document.querySelector(".sign-up input[placeholder='Confirm password']").value;
+
+            const messageBox = document.getElementById("signUpMessage");
+
+            if (password !== confirmPassword) {
+                messageBox.style.color = "red";
+                messageBox.textContent = "Passwords do not match.";
+                return;
+            }
+
+            const response = await fetch("http://localhost:3000/api/auth/signup", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    name: username,
+                    email,
+                    password
+                })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                messageBox.style.color = "green";
+                messageBox.textContent = "Sign-up successful! Please sign in.";
+
+                setTimeout(() => {
+                    toggle(); // Pindah ke form sign-in
+                }, 1000);
+            } else {
+                messageBox.style.color = "red";
+                messageBox.textContent = result.message || "Sign-up failed.";
             }
         }
     </script>

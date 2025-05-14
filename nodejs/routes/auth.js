@@ -45,4 +45,45 @@ router.post("/login", async (req, res) => {
   }
 });
 
+router.post("/signup", async (req, res) => {
+  const { name, email, password } = req.body;
+
+  try {
+    // Validasi input
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    // Cek apakah email sudah terdaftar
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ message: "Email is already registered" });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Cari role member
+    const memberRole = await Role.findOne({ where: { name: "member" } });
+    if (!memberRole) {
+      return res.status(500).json({ message: "Member role not found" });
+    }
+
+    // Buat user baru
+    const newUser = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      roles_idroles: memberRole.idroles,
+    });
+
+    return res
+      .status(201)
+      .json({ message: "User registered successfully", user: newUser });
+  } catch (err) {
+    console.error("Sign-up error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
 module.exports = router;
