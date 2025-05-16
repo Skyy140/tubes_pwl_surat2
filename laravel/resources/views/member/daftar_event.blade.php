@@ -1,0 +1,137 @@
+@extends('layout.index')
+
+@section('title', 'Daftar Event')
+
+@section('content')
+    <main class="main">
+        <section class="section py-5">
+            <div class="container">
+                <div class="row gy-5">
+                    {{-- Kiri: Detail Event --}}
+                    <div class="col-lg-7">
+                        <img src="/assets/img/services-1.jpg" class="img-fluid rounded mb-4 shadow-sm" alt="Event Image"
+                            style="max-height: 350px; object-fit: cover; width: 100%;">
+
+
+                        <h2 class="mb-4 fw-bold text-primary">{{ $daftar_event['name'] }}</h2>
+
+                        {{-- Card Info Event --}}
+                        <div class="card shadow-sm rounded mb-4 border-0">
+                            <div class="card-body">
+                                <div class="row gx-4 gy-3 fs-6 text-secondary">
+                                    <div class="col-6 fw-semibold">Tanggal</div>
+                                    <div class="col-6">
+                                        {{ \Carbon\Carbon::parse($daftar_event['date_start'])->translatedFormat('d M Y') }}
+                                        - {{ \Carbon\Carbon::parse($daftar_event['date_end'])->translatedFormat('d M Y') }}
+                                    </div>
+
+                                    <div class="col-6 fw-semibold">Jam</div>
+                                    <div class="col-6">{{ $daftar_event['time'] }}</div>
+
+                                    <div class="col-6 fw-semibold">Lokasi</div>
+                                    <div class="col-6">{{ $daftar_event['location'] }}</div>
+
+                                    <div class="col-6 fw-semibold">Biaya</div>
+                                    <div class="col-6 text-success fw-bold">Rp
+                                        {{ number_format($daftar_event['registration_fee'], 0, ',', '.') }}</div>
+
+                                    <div class="col-6 fw-semibold">Peserta</div>
+                                    <div class="col-6">{{ $daftar_event['max_participants'] }}</div>
+
+                                    <div class="col-6 fw-semibold">Kategori</div>
+                                    <div class="col-6 text-wrap">
+                                        @foreach ($daftar_event['categories'] as $category)
+                                            <span class="badge bg-info text-dark me-1 mb-1">{{ $category['name'] }}</span>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Deskripsi Event --}}
+                        <div class="card shadow-sm rounded mb-5 border-0">
+                            <div class="card-body">
+                                <h5 class="card-title mb-3">Keterangan</h5>
+                                <p class="mb-0 text-muted" style="white-space: pre-line;">{{ $daftar_event['description'] }}
+                                </p>
+                            </div>
+                        </div>
+
+                        {{-- Pembicara --}}
+                        <h4 class="mb-4 d-flex align-items-center gap-2">
+                            <i class="bi bi-person fs-4 text-primary"></i> Pembicara
+                        </h4>
+                        @if (!empty($daftar_event['speakers']))
+                            <div class="row g-4">
+                                @foreach ($daftar_event['speakers'] as $speaker)
+                                    <div class="col-md-6 col-lg-4">
+                                        <div class="card h-100 shadow-sm border-0 rounded hover-shadow">
+                                            <img src="{{ asset('assets/img/team/team-1.jpg') }}" class="card-img-top"
+                                                alt="{{ $speaker['name'] }}" style="height: 180px; object-fit: cover;">
+
+                                            <div class="card-body">
+                                                <h5 class="card-title">{{ $speaker['name'] }}</h5>
+                                                <p class="card-text text-muted small" style="min-height: 60px;">
+                                                    @if (!empty($speaker['description']))
+                                                        {{ Str::limit($speaker['description'], 100) }}
+                                                    @else
+                                                        <em>Deskripsi belum tersedia.</em>
+                                                    @endif
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <p class="text-muted fst-italic">Tidak Ada Pembicara</p>
+                        @endif
+                    </div>
+
+                    {{-- Kanan: Form Daftar --}}
+                    <div class="col-lg-5">
+                        <div class="card shadow-sm rounded p-4 border-0">
+                            <h4 class="mb-4 fw-semibold text-primary">Form Pendaftaran</h4>
+                            <form action="" method="POST" id="registration-form">
+                                @csrf
+                                <div class="mb-3">
+                                    <label for="name" class="form-label fw-semibold">Nama Lengkap</label>
+                                    <input type="text" class="form-control" id="name" name="name"
+                                        placeholder="Masukkan nama lengkap" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="email" class="form-label fw-semibold">Email</label>
+                                    <input type="email" class="form-control" id="email" name="email"
+                                        placeholder="email@example.com" required>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="phone" class="form-label fw-semibold">Nomor Telepon</label>
+                                    <input type="tel" class="form-control" id="phone" name="phone" placeholder="0812xxxxxxx"
+                                        pattern="[0-9+]+" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100 fw-bold daftar-btn">Daftar
+                                    Sekarang</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <style>
+        .hover-shadow:hover {
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            transition: box-shadow 0.3s ease;
+        }
+
+        .daftar-btn {
+            transition: background-color 0.3s ease;
+        }
+
+        .daftar-btn:hover {
+            background-color: #004085;
+        }
+    </style>
+
+@endsection

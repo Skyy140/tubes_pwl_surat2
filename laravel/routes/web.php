@@ -10,3 +10,9 @@ Route::get('/login', function () {
     return view('layout.login');
 });
 
+Route::get('/event/{id}', [EventController::class, 'show'])->name('event.detail');
+
+Route::get('/event/{id}/daftar', [EventController::class, 'formDaftar'])->name('event.daftar');
+
+
+

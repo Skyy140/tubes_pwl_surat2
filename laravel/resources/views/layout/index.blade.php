@@ -33,7 +33,7 @@
     <header id="header" class="header d-flex align-items-center sticky-top">
         <div class="container-fluid container-xl position-relative d-flex align-items-center">
 
-            <a href="index.html" class="logo d-flex align-items-center me-auto">
+            <a href="/" class="logo d-flex align-items-center me-auto">
                 <!-- Uncomment the line below if you also wish to use an image logo -->
                 <!-- <img src="assets/img/logo.png" alt=""> -->
                 <h1 class="sitename">EventKu</h1>
@@ -42,11 +42,11 @@
             <nav id="navmenu" class="navmenu">
                 <ul>
                     <li><a href="#hero" class="active">Beranda<br></a></li>
-                    <li><a href="#about">Tentang Kami</a></li>
+                    {{-- <li><a href="#about">Tentang Kami</a></li> --}}
                     <li><a href="#services">Event</a></li>
-                    <li><a href="#portfolio">Portofolio</a></li>
+                    {{-- <li><a href="#portfolio">Portofolio</a></li> --}}
                     <li><a href="#team">Tim</a></li>
-                    <li class="dropdown"><a href="#"><span>Dropdown</span> <i
+                    {{-- <li class="dropdown"><a href="#"><span>Dropdown</span> <i
                                 class="bi bi-chevron-down toggle-dropdown"></i></a>
                         <ul>
                             <li><a href="#">Dropdown 1</a></li>
@@ -65,13 +65,13 @@
                             <li><a href="#">Dropdown 4</a></li>
                         </ul>
                     </li>
-                    <li><a href="#contact">Kontak</a></li>
+                    <li><a href="#contact">Kontak</a></li> --}}
                 </ul>
                 <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
             </nav>
 
             <div id="auth-section">
-                <a class="btn-getstarted" href="/login">Daftar</a>
+                <a class="btn-getstarted" href="/login">Daftar / Masuk</a>
             </div>
 
         </div>
@@ -161,6 +161,8 @@
         });
     </script>
 
+
 </body>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </html>

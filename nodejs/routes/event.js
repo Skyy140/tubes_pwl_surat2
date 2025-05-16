@@ -1,27 +1,83 @@
 const express = require("express");
 const router = express.Router();
-const Event = require("../models/event");
+const { Event, Category, Speaker } = require("../models"); 
 
-// GET all events
 router.get("/", async (req, res) => {
   try {
-    const events = await Event.findAll();
+    const categoryId = req.query.category;
+
+    let events;
+
+    if (categoryId) {
+      events = await Event.findAll({
+        include: [
+          {
+            model: Category,
+            as: "categories",
+            where: { idcategory: categoryId },
+            through: { attributes: [] },
+          },
+          {
+            model: Speaker,
+            as: "speakers",
+            through: { attributes: [] },
+          },
+        ],
+      });
+    } else {
+      events = await Event.findAll({
+        include: [
+          {
+            model: Category,
+            as: "categories",
+            through: { attributes: [] },
+          },
+          {
+            model: Speaker,
+            as: "speakers", 
+            through: { attributes: [] },
+          },
+        ],
+      });
+    }
+
     res.json(events);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Terjadi kesalahan saat mengambil event" });
   }
 });
+
 
 // GET event by ID
 router.get("/:id", async (req, res) => {
   try {
-    const event = await Event.findByPk(req.params.id);
-    if (!event) return res.status(404).send("Event not found");
+    const event = await Event.findByPk(req.params.id, {
+      include: [
+        {
+          model: Category,
+          as: "categories",
+          through: { attributes: [] },
+        },
+        {
+          model: Speaker,
+          as: "speakers",
+          through: { attributes: [] },
+        },
+      ],
+    });
+
+    if (!event) {
+      return res.status(404).json({ message: "Event tidak ditemukan" });
+    }
+
     res.json(event);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Terjadi kesalahan saat mengambil event" });
   }
 });
+
 
 // POST new event
 router.post("/", async (req, res) => {
@@ -75,6 +131,17 @@ router.delete("/:id", async (req, res) => {
 
     await event.destroy();
     res.sendStatus(204);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+router.get("/categories/all", async (req, res) => {
+  try {
+    const categories = await Category.findAll({
+      attributes: ['idcategory', 'name']
+    });
+    res.json(categories);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
