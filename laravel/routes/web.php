@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\EventController;
 
+use App\Http\Controllers\PanitiaController;
+
 Route::get('/', [EventController::class, 'index']);
 
 Route::get('/login', function () {
@@ -14,5 +16,49 @@ Route::get('/event/{id}', [EventController::class, 'show'])->name('event.detail'
 
 Route::get('/event/{id}/daftar', [EventController::class, 'formDaftar'])->name('event.daftar');
 
+Route::get('/admin/dashboard', function () {
+    return view('admin.dashboard');
+})->name('admin.dashboard');
 
+Route::get('/admin/tim-keuangan', function () {
+    return view('admin.timKeuangan');
+})->name('admin.timKeuangan');
 
+Route::get('/admin/tambah-tim-keuangan', function () {
+    return view('admin.tambahTimKeuangan');
+})->name('admin.tambahTimKeuangan');
+
+use App\Http\Controllers\TimKeuanganController;
+Route::get('/admin/edit-tim-keuangan/{id}', [TimKeuanganController::class, 'edit'])->name('admin.editTimKeuangan');
+
+// Panitia routes
+Route::get('/admin/panitia', function () {
+    return view('admin.panitia');
+})->name('admin.panitia');
+
+Route::get('/admin/tambah-tim-panitia', function () {
+    return view('admin.tambahPanitia');
+})->name('admin.tambahTimPanitia');
+
+Route::get('/admin/edit-tim-panitia/{id}', [PanitiaController::class, 'edit'])->name('admin.editTimPanitia');
+
+// Profile page route (admin)
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Session;
+Route::get('/admin/profile', function () {
+    // Ambil id user dari session (misal 'user_id'), sesuaikan dengan implementasi login kamu
+    $userId = session('user_id');
+    $user = [
+        'name' => '',
+        'email' => '',
+        'status' => '',
+    ];
+    if ($userId) {
+        // Ambil data user dari Node.js
+        $response = Http::get('http://localhost:3000/api/users/profile/' . $userId);
+        if ($response->successful()) {
+            $user = $response->json();
+        }
+    }
+    return view('admin.profile', compact('user'));
+})->name('admin.profile');

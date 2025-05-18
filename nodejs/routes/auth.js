@@ -21,6 +21,11 @@ router.post("/login", async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Cek status user
+    if (user.status !== "aktif") {
+      return res.status(403).json({ message: "Akun sudah tidak aktif." });
+    }
+
     // Bandingkan password
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) {
@@ -33,12 +38,17 @@ router.post("/login", async (req, res) => {
         id: user.idusers,
         email: user.email,
         role: user.role ? user.role.name : null,
+        roles_idroles: user.roles_idroles,
       },
       JWT_SECRET,
       { expiresIn: "1h" }
     );
 
-    return res.json({ message: "Login successful", token });
+    return res.json({
+      message: "Login successful",
+      token,
+      roles_idroles: user.roles_idroles,
+    });
   } catch (err) {
     console.error("Login error:", err);
     return res.status(500).json({ message: "Server error" });
@@ -69,12 +79,13 @@ router.post("/signup", async (req, res) => {
       return res.status(500).json({ message: "Member role not found" });
     }
 
-    // Buat user baru
+    // Buat user baru dengan status default "aktif"
     const newUser = await User.create({
       name,
       email,
       password: hashedPassword,
       roles_idroles: memberRole.idroles,
+      status: "aktif",
     });
 
     return res

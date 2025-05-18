@@ -20,6 +20,11 @@ const User = db.define(
     password: {
       type: DataTypes.STRING(255),
     },
+    status: {
+      type: DataTypes.ENUM("aktif", "tidak"),
+      allowNull: false,
+      defaultValue: "aktif",
+    },
     created_at: {
       type: DataTypes.DATE,
     },

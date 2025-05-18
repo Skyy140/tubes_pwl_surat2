@@ -378,16 +378,16 @@
                         </div>
                         <div class="input-group">
                             <i class='bx bxs-lock-alt'></i>
-                            <input type="password" placeholder="Confirm password">
+                            <input type="password" placeholder="Konfirmasi password">
                         </div>
                         <p id="signUpMessage" style="color: red;"></p>
-                        <button type="button" onclick="signUpUser()">Sign up</button>
+                        <button type="button" onclick="signUpUser()">Daftar</button>
                         <p>
                             <span>
-                                Already have an account?
+                                Sudah punya akun?
                             </span>
                             <b onclick="toggle()" class="pointer">
-                                Sign in here
+                                Masuk di sini
                             </b>
                         </p>
                     </div>
@@ -407,14 +407,11 @@
                             <i class='bx bxs-lock-alt'></i>
                             <input type="password" id="password" placeholder="Password" required>
                         </div>
-                        <button type="button" onclick="loginUser()">Sign in</button>
+                        <button type="button" onclick="loginUser()">Masuk</button>
                         <p id="loginMessage" style="color: red;"></p>
                         <p>
-                            <b>Forgot password?</b>
-                        </p>
-                        <p>
-                            <span>Don't have an account?</span>
-                            <b onclick="toggle()" class="pointer">Sign up here</b>
+                            <span>Belum punya akun?</span>
+                            <b onclick="toggle()" class="pointer">Daftar di sini</b>
                         </p>
                     </div>
                 </div>
@@ -429,7 +426,10 @@
             <div class="col align-items-center flex-col">
                 <div class="text sign-in">
                     <h2>
-                        Welcome
+                        Selamat
+                    </h2>
+                    <h2>
+                        Datang
                     </h2>
 
                 </div>
@@ -445,7 +445,7 @@
                 </div>
                 <div class="text sign-up">
                     <h2>
-                        Join with us
+                        Mari bergabung
                     </h2>
 
                 </div>
@@ -493,7 +493,11 @@
                 localStorage.setItem("token", result.token); // Simpan token JWT
 
                 setTimeout(() => {
-                    window.location.href = "/"; // Redirect setelah 1 detik
+                    if (result.roles_idroles == 2) {
+                        window.location.href = "/admin/dashboard";
+                    } else {
+                        window.location.href = "/";
+                    }
                 }, 1000);
             } else {
                 messageBox.style.color = "red";
@@ -504,16 +508,17 @@
 
     <script>
         async function signUpUser() {
-            const username = document.querySelector(".sign-up input[placeholder='Username']").value;
+            // Ambil value dari input sign up
+            const name = document.querySelector(".sign-up input[placeholder='Nama Lengkap']").value;
             const email = document.querySelector(".sign-up input[placeholder='Email']").value;
             const password = document.querySelector(".sign-up input[placeholder='Password']").value;
-            const confirmPassword = document.querySelector(".sign-up input[placeholder='Confirm password']").value;
+            const confirmPassword = document.querySelector(".sign-up input[placeholder='Konfirmasi password']").value;
 
             const messageBox = document.getElementById("signUpMessage");
 
             if (password !== confirmPassword) {
                 messageBox.style.color = "red";
-                messageBox.textContent = "Passwords do not match.";
+                messageBox.textContent = "Passwords tidak cocok.";
                 return;
             }
 
@@ -523,7 +528,7 @@
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    name: username,
+                    name,
                     email,
                     password
                 })
@@ -533,16 +538,42 @@
 
             if (response.ok) {
                 messageBox.style.color = "green";
-                messageBox.textContent = "Sign-up successful! Please sign in.";
-
+                messageBox.textContent = "Pendaftaran berhasil! Silahkan Masuk.";
                 setTimeout(() => {
                     toggle(); // Pindah ke form sign-in
                 }, 1000);
             } else {
                 messageBox.style.color = "red";
-                messageBox.textContent = result.message || "Sign-up failed.";
+                messageBox.textContent = result.message || "Pendaftaran gagal.";
             }
         }
+    </script>
+
+    <script>
+        // Tambahkan event listener untuk tombol dan input agar bisa submit dengan Enter
+
+        document.addEventListener("DOMContentLoaded", function() {
+            // Untuk login
+            const loginForm = document.querySelector(".form.sign-in");
+            if (loginForm) {
+                loginForm.addEventListener("keydown", function(e) {
+                    if (e.key === "Enter") {
+                        e.preventDefault();
+                        loginUser();
+                    }
+                });
+            }
+            // Untuk sign up
+            const signUpForm = document.querySelector(".form.sign-up");
+            if (signUpForm) {
+                signUpForm.addEventListener("keydown", function(e) {
+                    if (e.key === "Enter") {
+                        e.preventDefault();
+                        signUpUser();
+                    }
+                });
+            }
+        });
     </script>
 
 </body>
