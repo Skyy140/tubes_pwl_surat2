@@ -33,6 +33,10 @@ router.patch(
 );
 // Nonaktifkan user panitia (status jadi 'tidak')
 router.patch("/panitia/nonaktifkan/:id", userController.nonaktifkanPanitiaUser);
+
+// Dashboard: Get count of users by role (for frontend chart)
+router.get("/role-counts", userController.getUserRoleCounts);
+
 module.exports = router;
 
 // Profile routes (for admin/user self profile)

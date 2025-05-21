@@ -9,8 +9,8 @@
             <!-- Page Heading -->
             <div class="d-sm-flex align-items-center justify-content-between mb-4">
                 <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
-                <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
-                        class="fas fa-download fa-sm text-white-50"></i> Generate Report</a>
+                {{-- <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
+                        class="fas fa-download fa-sm text-white-50"></i> Generate Report</a> --}}
             </div>
             <!-- Content Row -->
             <div class="row">
@@ -150,16 +150,15 @@
                                 <canvas id="myPieChart"></canvas>
                             </div>
                             <div class="mt-4 text-center small">
-                                <span class="mr-2"><i class="fas fa-circle text-primary"></i> Direct</span>
-                                <span class="mr-2"><i class="fas fa-circle text-success"></i> Social</span>
-                                <span class="mr-2"><i class="fas fa-circle text-info"></i> Referral</span>
+                                <span class="mr-2"><i class="fas fa-circle text-primary"></i> Tim Keuangan </span>
+                                <span class="mr-2"><i class="fas fa-circle text-success"></i> Panitia</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
             <!-- Content Row -->
-            <div class="row">
+            {{-- <div class="row">
                 <!-- Content Column -->
                 <div class="col-lg-6 mb-4">
                     <!-- Project Card Example -->
@@ -285,19 +284,19 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> --}}
         </div>
         <!-- /.container-fluid -->
     </div>
     <!-- End of Main Content -->
     <!-- Footer -->
-    <footer class="sticky-footer bg-white">
+    {{-- <footer class="sticky-footer bg-white">
         <div class="container my-auto">
             <div class="copyright text-center my-auto">
                 <span>Copyright &copy; Your Website 2021</span>
             </div>
         </div>
-    </footer>
+    </footer> --}}
     <!-- End of Footer -->
 
     <!-- End of Content Wrapper -->

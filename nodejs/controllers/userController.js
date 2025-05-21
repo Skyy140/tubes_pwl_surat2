@@ -13,6 +13,20 @@ exports.getProfile = async (req, res) => {
   }
 };
 
+// API: Get count of users by roles_idroles (for dashboard)
+exports.getUserRoleCounts = async (req, res) => {
+  try {
+    const User = require("../models/user");
+    // Count users with roles_idroles = 3 (Keuangan)
+    const keuanganCount = await User.count({ where: { roles_idroles: 3 } });
+    // Count users with roles_idroles = 4 (Panitia)
+    const panitiaCount = await User.count({ where: { roles_idroles: 4 } });
+    res.json({ keuangan: keuanganCount, panitia: panitiaCount });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 // Update current user profile (for admin/user self profile)
 exports.updateProfile = async (req, res) => {
   try {

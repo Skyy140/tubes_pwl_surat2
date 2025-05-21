@@ -97,7 +97,7 @@
         </li>
 
         <!-- Nav Item - Messages -->
-        <li class="nav-item dropdown no-arrow mx-1">
+        {{-- <li class="nav-item dropdown no-arrow mx-1">
             <a class="nav-link dropdown-toggle" href="#" id="messagesDropdown" role="button"
                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <i class="fas fa-envelope fa-fw"></i>
@@ -112,7 +112,8 @@
                 </h6>
                 <a class="dropdown-item d-flex align-items-center" href="#">
                     <div class="dropdown-list-image mr-3">
-                        <img class="rounded-circle" src="img/undraw_profile_1.svg" alt="...">
+                        <img class="rounded-circle" src="{{ asset('assetsAdmin/img/undraw_profile_1.svg') }}"
+                            alt="...">
                         <div class="status-indicator bg-success"></div>
                     </div>
                     <div class="font-weight-bold">
@@ -157,16 +158,16 @@
                 </a>
                 <a class="dropdown-item text-center small text-gray-500" href="#">Read More Messages</a>
             </div>
-        </li>
+        </li> --}}
 
         <div class="topbar-divider d-none d-sm-block"></div>
 
         <!-- Nav Item - User Information -->
         <li class="nav-item dropdown no-arrow">
-            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
-                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <span class="mr-2 d-none d-lg-inline text-gray-600 small">Douglas McGee</span>
-                <img class="img-profile rounded-circle" src="img/undraw_profile.svg">
+            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown"
+                aria-haspopup="true" aria-expanded="false">
+                <span id="adminName" class="mr-2 d-none d-lg-inline text-gray-600 small"></span>
+                {{-- <img class="img-profile rounded-circle" src="img/undraw_profile.svg"> --}}
             </a>
             <!-- Dropdown - User Information -->
             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
@@ -203,6 +204,31 @@
                         localStorage.removeItem("token");
                         window.location.href = "/login";
                     });
+                }
+            });
+        </script>
+
+        <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
+        <script>
+            document.addEventListener("DOMContentLoaded", async function() {
+                const token = localStorage.getItem('token');
+                if (token) {
+                    try {
+                        const decoded = window.jwt_decode(token);
+                        const userId = decoded.id;
+                        // Ambil nama user dari Node.js
+                        const res = await fetch(`http://localhost:3000/api/users/profile/${userId}`, {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+                        if (res.ok) {
+                            const user = await res.json();
+                            document.getElementById('adminName').textContent = user.name || 'User';
+                        }
+                    } catch (e) {
+                        document.getElementById('adminName').textContent = 'User';
+                    }
                 }
             });
         </script>
