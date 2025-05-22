@@ -97,12 +97,12 @@
                                 <div class="mb-3">
                                     <label for="name" class="form-label fw-semibold">Nama Lengkap</label>
                                     <input type="text" class="form-control" id="name" name="name"
-                                        placeholder="Masukkan nama lengkap" required>
+                                        placeholder="Masukkan nama lengkap" required readonly style="background-color: rgb(238, 237, 237)">
                                 </div>
                                 <div class="mb-3">
                                     <label for="email" class="form-label fw-semibold">Email</label>
                                     <input type="email" class="form-control" id="email" name="email"
-                                        placeholder="email@example.com" required>
+                                        placeholder="email@example.com" required readonly style="background-color: rgb(238, 237, 237)">
                                 </div>
                                 <div class="mb-4">
                                     <label for="phone" class="form-label fw-semibold">Nomor Telepon</label>
@@ -134,4 +134,41 @@
         }
     </style>
 
+<script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
+    <script>
+        async function loadProfile() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                document.getElementById('profileMessage').innerHTML =
+                    '<div class="alert alert-danger">Silakan login terlebih dahulu.</div>';
+                return;
+            }
+            let decoded;
+            try {
+                decoded = window.jwt_decode(token);
+            } catch (e) {
+                document.getElementById('profileMessage').innerHTML =
+                    '<div class="alert alert-danger">Token tidak valid. Silakan login ulang.</div>';
+                return;
+            }
+            const userId = decoded.id;
+            try {
+                const res = await fetch(`http://localhost:3000/api/users/profile/${userId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (!res.ok) throw new Error('Gagal mengambil data profil');
+                const user = await res.json();
+                document.getElementById('name').value = user.name || '';
+                document.getElementById('email').value = user.email || '';
+                // document.getElementById('status').value = user.status || '';
+            } catch (err) {
+                document.getElementById('profileMessage').innerHTML = '<div class="alert alert-danger">' + err.message +
+                    '</div>';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadProfile);
+    </script>
 @endsection

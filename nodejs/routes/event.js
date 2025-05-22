@@ -1,45 +1,35 @@
 const express = require("express");
 const router = express.Router();
-const { Event, Category, Speaker } = require("../models"); 
+const { Event, Category, EventDetail, Speaker } = require("../models"); 
 
 router.get("/", async (req, res) => {
   try {
     const categoryId = req.query.category;
 
-    let events;
-
-    if (categoryId) {
-      events = await Event.findAll({
+    let include = [
+      {
+        model: Category,
+        as: "categories",
+        through: { attributes: [] },
+      },
+      {
+        model: EventDetail,
+        as: "details",
         include: [
-          {
-            model: Category,
-            as: "categories",
-            where: { idcategory: categoryId },
-            through: { attributes: [] },
-          },
           {
             model: Speaker,
             as: "speakers",
             through: { attributes: [] },
           },
         ],
-      });
-    } else {
-      events = await Event.findAll({
-        include: [
-          {
-            model: Category,
-            as: "categories",
-            through: { attributes: [] },
-          },
-          {
-            model: Speaker,
-            as: "speakers", 
-            through: { attributes: [] },
-          },
-        ],
-      });
+      },
+    ];
+
+    if (categoryId) {
+      include[0].where = { idcategory: categoryId };
     }
+
+    const events = await Event.findAll({ include });
 
     res.json(events);
   } catch (error) {
@@ -47,7 +37,6 @@ router.get("/", async (req, res) => {
     res.status(500).json({ message: "Terjadi kesalahan saat mengambil event" });
   }
 });
-
 
 // GET event by ID
 router.get("/:id", async (req, res) => {

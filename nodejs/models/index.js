@@ -1,8 +1,8 @@
 const Event = require("./event");
 const Category = require("./category");
+const EventDetail = require("./event_detail");
 const Speaker = require("./speaker");
 
-// Relasi Event ↔ Category
 Event.belongsToMany(Category, {
   through: "events_has_category",
   foreignKey: "events_idevents",
@@ -16,22 +16,34 @@ Category.belongsToMany(Event, {
   as: "events",
 });
 
-// Relasi Event ↔ Speaker
-Event.belongsToMany(Speaker, {
-  through: "events_has_speaker",
+Event.hasMany(EventDetail, {
   foreignKey: "events_idevents",
+  as: "details",
+});
+EventDetail.belongsTo(Event, {
+  foreignKey: "events_idevents",
+  as: "event",
+});
+
+EventDetail.belongsToMany(Speaker, {
+  through: "event_detail_has_speaker",
+  foreignKey: "event_detail_idevent_detail",
   otherKey: "speaker_idspeaker",
-  as: "speakers", // gunakan 'speakers' agar sama dengan di include
+  as: "speakers",
 });
-Speaker.belongsToMany(Event, {
-  through: "events_has_speaker",
+Speaker.belongsToMany(EventDetail, {
+  through: "event_detail_has_speaker",
   foreignKey: "speaker_idspeaker",
-  otherKey: "events_idevents",
-  as: "events",
+  otherKey: "event_detail_idevent_detail",
+  as: "details",
 });
+
+
 
 module.exports = {
   Event,
   Category,
+  EventDetail,
   Speaker,
 };
+

@@ -123,14 +123,25 @@
                                         {{ $event['location'] ?? 'Lokasi belum ditentukan' }}</p>
                                     <p class="mb-1"><i class="bi bi-cash-stack"></i> Biaya: {{ $event['registration_fee'] }}</p>
                                     <p class="mb-1"><i class="bi bi-people"></i> Peserta: {{ $event['max_participants'] }}</p>
-                                    @if (!empty($event['speakers']))
-                                        <p class="mb-3"><i class="bi bi-person"></i> Pembicara:
-                                            @foreach ($event['speakers'] as $speaker)
-                                                {{ $speaker['name'] }}@if (!$loop->last), @endif
+                                    @if (!empty($event['details']))
+                                        <p class="mb-3"><i class="bi bi-person"></i> Sesi:
+                                            @foreach ($event['details'] as $detail)
+                                                {{ $detail['sesi'] }}@if (!$loop->last), @endif
                                             @endforeach
                                         </p>
                                     @else
-                                        <p>Tidak Ada Pembicara</p>
+                                        <p>Tidak Ada Sesi</p>
+                                    @endif
+                                    @if (!empty($event['details']))
+                                        <p class="mb-3"><i class="bi bi-person"></i> Pembicara:
+                                            @foreach ($event['details'] as $detail)
+                                                @foreach ($detail['speakers'] as $speaker)
+                                                    {{ $speaker['name'] }}@if (!$loop->last), @endif
+                                                @endforeach
+                                            @endforeach
+                                        </p>
+                                    @else
+                                        <p>Tidak Ada Nama</p>
                                     @endif
                                 </div>
                                 <div class="card-footer bg-transparent border-top-0 text-end">
