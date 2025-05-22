@@ -31,6 +31,7 @@ Route::get('/admin/tambah-tim-keuangan', function () {
 use App\Http\Controllers\TimKeuanganController;
 Route::get('/admin/edit-tim-keuangan/{id}', [TimKeuanganController::class, 'edit'])->name('admin.editTimKeuangan');
 
+
 // Panitia routes
 Route::get('/admin/panitia', function () {
     return view('admin.panitia');
@@ -41,6 +42,10 @@ Route::get('/admin/tambah-tim-panitia', function () {
 })->name('admin.tambahTimPanitia');
 
 Route::get('/admin/edit-tim-panitia/{id}', [PanitiaController::class, 'edit'])->name('admin.editTimPanitia');
+
+// Panit Event (for panitia)
+use App\Http\Controllers\PanitEventController;
+Route::get('/panit/event', [PanitEventController::class, 'index'])->name('panit.event');
 
 // Profile page route (admin)
 use Illuminate\Support\Facades\Http;
@@ -62,3 +67,11 @@ Route::get('/admin/profile', function () {
     }
     return view('admin.profile', compact('user'));
 })->name('admin.profile');
+
+Route::get('/panit/dashboard', function () {
+    return view('panit.dashboard');
+})->name('panit.dashboard');
+
+Route::get('/panit/tambah-event', function () {
+    return view('panit.tambahEvent');
+})->name('panit.tambahEvent');

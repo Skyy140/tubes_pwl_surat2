@@ -1,6 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const { Event, Category, EventDetail, Speaker } = require("../models/semuaRelasi"); 
+const {
+  Event,
+  Category,
+  EventDetail,
+  Speaker,
+} = require("../models/semuaRelasi");
 
 router.get("/", async (req, res) => {
   try {
@@ -100,8 +105,6 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-
-
 // POST new event
 router.post("/", async (req, res) => {
   try {
@@ -162,7 +165,7 @@ router.delete("/:id", async (req, res) => {
 router.get("/categories/all", async (req, res) => {
   try {
     const categories = await Category.findAll({
-      attributes: ['idcategory', 'name']
+      attributes: ["idcategory", "name"],
     });
     res.json(categories);
   } catch (err) {
@@ -170,4 +173,54 @@ router.get("/categories/all", async (req, res) => {
   }
 });
 
+// Route khusus untuk admin: ambil event_detail beserta speaker dan kategori untuk event tertentu
+router.get("/admin/event-details/:eventId", async (req, res) => {
+  try {
+    const {
+      EventDetail,
+      Event,
+      Category,
+      Speaker,
+    } = require("../models/semuaRelasi");
+    const eventId = req.params.eventId;
+    const details = await EventDetail.findAll({
+      where: { events_idevents: eventId },
+      attributes: [
+        "date",
+        "sesi",
+        "time_start",
+        "time_end",
+        "description",
+        "events_idevents",
+      ],
+      include: [
+        {
+          model: Event,
+          as: "event",
+          attributes: ["name"],
+          include: [
+            {
+              model: Category,
+              as: "categories",
+              attributes: ["name"],
+              through: { attributes: [] },
+            },
+          ],
+        },
+        {
+          model: Speaker,
+          as: "speakers",
+          attributes: ["name"],
+          through: { attributes: [] },
+        },
+      ],
+    });
+    res.json(details);
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "Terjadi kesalahan saat mengambil data event_detail" });
+  }
+});
 module.exports = router;
