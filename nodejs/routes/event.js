@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { Event, Category, EventDetail, Speaker } = require("../models"); 
+const { Event, Category, EventDetail, Speaker } = require("../models/semuaRelasi"); 
 
 router.get("/", async (req, res) => {
   try {
@@ -39,6 +39,33 @@ router.get("/", async (req, res) => {
 });
 
 // GET event by ID
+// router.get("/:id", async (req, res) => {
+//   try {
+//     const event = await Event.findByPk(req.params.id, {
+//       include: [
+//         {
+//           model: Category,
+//           as: "categories",
+//           through: { attributes: [] },
+//         },
+//         {
+//           model: Speaker,
+//           as: "speakers",
+//           through: { attributes: [] },
+//         },
+//       ],
+//     });
+
+//     if (!event) {
+//       return res.status(404).json({ message: "Event tidak ditemukan" });
+//     }
+
+//     res.json(event);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: "Terjadi kesalahan saat mengambil event" });
+//   }
+// });
 router.get("/:id", async (req, res) => {
   try {
     const event = await Event.findByPk(req.params.id, {
@@ -49,9 +76,15 @@ router.get("/:id", async (req, res) => {
           through: { attributes: [] },
         },
         {
-          model: Speaker,
-          as: "speakers",
-          through: { attributes: [] },
+          model: EventDetail,
+          as: "details",
+          include: [
+            {
+              model: Speaker,
+              as: "speakers",
+              through: { attributes: [] },
+            },
+          ],
         },
       ],
     });
@@ -66,6 +99,7 @@ router.get("/:id", async (req, res) => {
     res.status(500).json({ message: "Terjadi kesalahan saat mengambil event" });
   }
 });
+
 
 
 // POST new event

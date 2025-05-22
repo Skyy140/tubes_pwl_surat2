@@ -2,8 +2,10 @@ const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const User = require("../models/user");
-const Role = require("../models/role");
+// const User = require("../models/user");
+// const Role = require("../models/role");
+const { User, Role } = require("../models/semuaRelasi"); 
+
 
 const JWT_SECRET = "your_jwt_secret"; // Ganti dengan secret environment jika production
 

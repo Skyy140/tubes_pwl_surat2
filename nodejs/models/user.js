@@ -44,6 +44,4 @@ const User = db.define(
   }
 );
 
-User.belongsTo(Role, { foreignKey: "roles_idroles" });
-
 module.exports = User;

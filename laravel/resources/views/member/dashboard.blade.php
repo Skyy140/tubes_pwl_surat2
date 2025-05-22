@@ -106,7 +106,7 @@
                                     <div class="position-absolute top-0 start-0 m-2 d-flex flex-wrap gap-1">
                                         @if (!empty($event['categories']))
                                             @foreach ($event['categories'] as $category)
-                                                <span class="badge bg-primary">{{ $category['name'] }}</span>
+                                                <span class="badge bg-success">{{ $category['name'] }}</span>
                                             @endforeach
                                         @else
                                             <span class="badge bg-secondary">Tidak ada kategori</span>

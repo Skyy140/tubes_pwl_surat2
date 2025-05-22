@@ -33,7 +33,8 @@
 
                                     <div class="col-6 fw-semibold">Biaya</div>
                                     <div class="col-6 text-success fw-bold">Rp
-                                        {{ number_format($daftar_event['registration_fee'], 0, ',', '.') }}</div>
+                                        {{ number_format($daftar_event['registration_fee'], 0, ',', '.') }}
+                                    </div>
 
                                     <div class="col-6 fw-semibold">Peserta</div>
                                     <div class="col-6">{{ $daftar_event['max_participants'] }}</div>
@@ -97,18 +98,41 @@
                                 <div class="mb-3">
                                     <label for="name" class="form-label fw-semibold">Nama Lengkap</label>
                                     <input type="text" class="form-control" id="name" name="name"
-                                        placeholder="Masukkan nama lengkap" required readonly style="background-color: rgb(238, 237, 237)">
+                                        placeholder="Masukkan nama lengkap" required readonly
+                                        style="background-color: rgb(238, 237, 237)">
                                 </div>
                                 <div class="mb-3">
                                     <label for="email" class="form-label fw-semibold">Email</label>
                                     <input type="email" class="form-control" id="email" name="email"
-                                        placeholder="email@example.com" required readonly style="background-color: rgb(238, 237, 237)">
+                                        placeholder="email@example.com" required readonly
+                                        style="background-color: rgb(238, 237, 237)">
                                 </div>
                                 <div class="mb-4">
-                                    <label for="phone" class="form-label fw-semibold">Nomor Telepon</label>
-                                    <input type="tel" class="form-control" id="phone" name="phone" placeholder="0812xxxxxxx"
-                                        pattern="[0-9+]+" required>
+                                    <label class="form-label fw-semibold">Pilihan Sesi</label>
+
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="checkAllSessions">
+                                        <label class="form-check-label" for="checkAllSessions">
+                                            Semua Sesi
+                                        </label>
+                                    </div>
+
+                                    @if (!empty($daftar_event['details']))
+                                        @foreach ($daftar_event['details'] as $detail)
+                                            <div class="form-check">
+                                                <input class="form-check-input sesi-checkbox" type="checkbox" name="sesi[]"
+                                                    value="{{ $detail['sesi'] }}" id="sesi_{{ $loop->index }}">
+                                                <label class="form-check-label" for="sesi_{{ $loop->index }}">
+                                                    {{ $detail['sesi'] }}
+                                                </label>
+                                            </div>
+                                        @endforeach
+                                    @else
+                                        <p class="text-muted">Belum ada sesi tersedia.</p>
+                                    @endif
                                 </div>
+
+
                                 <button type="submit" class="btn btn-primary w-100 fw-bold daftar-btn">Daftar
                                     Sekarang</button>
                             </form>
@@ -134,7 +158,7 @@
         }
     </style>
 
-<script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
     <script>
         async function loadProfile() {
             const token = localStorage.getItem('token');
@@ -170,5 +194,29 @@
         }
 
         document.addEventListener('DOMContentLoaded', loadProfile);
+
+        // sesi
+        document.addEventListener('DOMContentLoaded', function () {
+            const checkAll = document.getElementById('checkAllSessions');
+            const sesiCheckboxes = document.querySelectorAll('.sesi-checkbox');
+
+            checkAll.addEventListener('change', function () {
+                sesiCheckboxes.forEach(cb => cb.checked = checkAll.checked);
+            });
+
+            sesiCheckboxes.forEach(cb => {
+                cb.addEventListener('change', function () {
+                    // Kalau salah satu tidak dicentang, uncheck "Semua Sesi"
+                    if (!this.checked) {
+                        checkAll.checked = false;
+                    } else {
+                        // Kalau semua dicentang, centang "Semua Sesi"
+                        if ([...sesiCheckboxes].every(x => x.checked)) {
+                            checkAll.checked = true;
+                        }
+                    }
+                });
+            });
+        });
     </script>
 @endsection
