@@ -75,3 +75,8 @@ Route::get('/panit/dashboard', function () {
 Route::get('/panit/tambah-event', function () {
     return view('panit.tambahEvent');
 })->name('panit.tambahEvent');
+
+// Route untuk form tambah event panitia
+Route::get('/panit/tambah-event', function () {
+    return view('panit.tambahEvent');
+})->name('panit.tambahEvent');

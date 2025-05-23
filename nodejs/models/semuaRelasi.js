@@ -7,15 +7,22 @@ const User = require("./user");
 const Registrasi = require("./registrations");
 const Payment = require("./payments");
 const Attendance = require("./attendances");
+const EventsHasCategory = require("./events_has_category_model");
 
 Event.belongsToMany(Category, {
-  through: "events_has_category",
+  through: {
+    model: EventsHasCategory,
+    attributes: [],
+  },
   foreignKey: "events_idevents",
   otherKey: "category_idcategory",
   as: "categories",
 });
 Category.belongsToMany(Event, {
-  through: "events_has_category",
+  through: {
+    model: EventsHasCategory,
+    attributes: [],
+  },
   foreignKey: "category_idcategory",
   otherKey: "events_idevents",
   as: "events",
@@ -30,14 +37,22 @@ EventDetail.belongsTo(Event, {
   as: "event",
 });
 
+const EventDetailHasSpeaker = require("./event_detail_has_speaker_model");
+
 EventDetail.belongsToMany(Speaker, {
-  through: "event_detail_has_speaker",
+  through: {
+    model: EventDetailHasSpeaker,
+    timestamps: false,
+  },
   foreignKey: "event_detail_idevent_detail",
   otherKey: "speaker_idspeaker",
   as: "speakers",
 });
 Speaker.belongsToMany(EventDetail, {
-  through: "event_detail_has_speaker",
+  through: {
+    model: EventDetailHasSpeaker,
+    timestamps: false,
+  },
   foreignKey: "speaker_idspeaker",
   otherKey: "event_detail_idevent_detail",
   as: "details",
@@ -91,10 +106,9 @@ module.exports = {
   Category,
   EventDetail,
   Speaker,
-  User, 
+  User,
   Role,
   Registrasi,
   Payment,
   Attendance,
 };
-
