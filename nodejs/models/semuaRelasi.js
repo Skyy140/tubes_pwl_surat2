@@ -5,9 +5,11 @@ const Speaker = require("./speaker");
 const Role = require("./role");
 const User = require("./user");
 const Registrasi = require("./registrations");
+const RegistrasiDetail = require("./registrations_detail");
 const Payment = require("./payments");
 const Attendance = require("./attendances");
 const EventsHasCategory = require("./events_has_category_model");
+const EventDetailHasSpeaker = require("./event_detail_has_speaker_model");
 
 Event.belongsToMany(Category, {
   through: {
@@ -37,7 +39,6 @@ EventDetail.belongsTo(Event, {
   as: "event",
 });
 
-const EventDetailHasSpeaker = require("./event_detail_has_speaker_model");
 
 EventDetail.belongsToMany(Speaker, {
   through: {
@@ -74,30 +75,48 @@ Registrasi.belongsTo(User, {
   // as: "user",
 });
 
-EventDetail.hasMany(Registrasi, {
-  foreignKey: "event_detail_idevent_detail",
+Event.hasMany(Registrasi, {
+  foreignKey: "events_idevents",
   // as: "registrasi",
 });
-Registrasi.belongsTo(EventDetail, {
-  foreignKey: "event_detail_idevent_detail",
-  // as: "eventDetail",
+Registrasi.belongsTo(Event, {
+  foreignKey: "events_idevents",
+  as: "events",
 });
 
 Registrasi.hasMany(Payment, {
   foreignKey: "registrations_idregistrations",
-  // as: "payment",
+  as: "payment",
 });
 Payment.belongsTo(Registrasi, {
+  foreignKey: "registrations_idregistrations",
+  as: "registrasi",
+});
+
+Registrasi.hasMany(RegistrasiDetail, {
+  foreignKey: "registrations_idregistrations",
+  as: "registrasiDetail",
+});
+RegistrasiDetail.belongsTo(Registrasi, {
   foreignKey: "registrations_idregistrations",
   // as: "registrasi",
 });
 
-Registrasi.hasMany(Attendance, {
-  foreignKey: "registrations_idregistrations",
+EventDetail.hasMany(RegistrasiDetail, {
+  foreignKey: "event_detail_idevent_detail",
+  // as: "payment",
+});
+RegistrasiDetail.belongsTo(EventDetail, {
+  foreignKey: "event_detail_idevent_detail",
+  as: "eventDetail",
+});
+
+RegistrasiDetail.hasMany(Attendance, {
+  foreignKey: "registrations_detail_idregistrations_detail",
   // as: "attendance",
 });
-Attendance.belongsTo(Registrasi, {
-  foreignKey: "registrations_idregistrations",
+Attendance.belongsTo(RegistrasiDetail, {
+  foreignKey: "registrations_detail_idregistrations_detail",
   // as: "registrasi",
 });
 
@@ -109,6 +128,7 @@ module.exports = {
   User,
   Role,
   Registrasi,
+  RegistrasiDetail,
   Payment,
   Attendance,
 };

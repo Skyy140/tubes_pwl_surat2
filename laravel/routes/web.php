@@ -80,3 +80,13 @@ Route::get('/panit/tambah-event', function () {
 Route::get('/panit/tambah-event', function () {
     return view('panit.tambahEvent');
 })->name('panit.tambahEvent');
+
+
+// Route::get('/event-saya', [EventController::class, 'eventSaya'])->name('event.saya');
+Route::get('/event-saya', function () {
+    return view('member.list_event'); 
+})->name('event.saya');
+
+Route::get('/keuangan/dashboard', function () {
+    return view('keuangan.dashboard');
+})->name('keuangan.dashboard');

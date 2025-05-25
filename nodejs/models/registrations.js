@@ -37,11 +37,11 @@ const Registrasi = sequelize.define("Registrasi", {
         key: "idusers",
       },
   },
-  event_detail_idevent_detail: {
+  events_idevents: {
       type: DataTypes.INTEGER,
       references: {
-        model: EventDetail,
-        key: "idevent_detail",
+        model: Event,
+        key: "idevents",
       },
   },
   

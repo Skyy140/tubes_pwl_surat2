@@ -51,10 +51,12 @@ const Event = sequelize.define("Event", {
   created_at: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW,
+    allowNull: true,
   },
   updated_at: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW,
+    allowNull: true,
   },
   description: {
     type: DataTypes.STRING(400),

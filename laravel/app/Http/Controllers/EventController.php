@@ -22,7 +22,6 @@ class EventController extends Controller
     // }
     public function index()
     {
-        // Ambil data event dari Node.js
         $responseEvents = Http::get('http://localhost:3000/api/events');
         $responseCategories = Http::get('http://localhost:3000/api/events/categories/all');
 
@@ -58,5 +57,20 @@ class EventController extends Controller
         return view('member.daftar_event', compact('daftar_event'));
     }
 
+    public function eventSaya()
+    {
+        $token = session('token');
+        if (!$token) {
+            return redirect('/login')->with('error', 'Harap login terlebih dahulu.');
+        }
 
+        $decoded = json_decode(base64_decode(str_replace('_', '/', str_replace('-', '+', explode('.', $token)[1]))), true);
+        $userId = $decoded['id'];
+
+        $response = Http::withToken($token)->get("http://localhost:3000/api/events/registrasi/user/$userId");
+
+        $registrations = $response->successful() ? $response->json() : [];
+
+        return view('member.list_event', compact('registrations'));
+    }
 }

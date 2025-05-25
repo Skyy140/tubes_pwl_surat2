@@ -30,6 +30,7 @@ const Payment = sequelize.define("Payment", {
   },
   verified_by: {
     type: DataTypes.INTEGER,
+    allowNull: true,
   },
   registrations_idregistrations: {
       type: DataTypes.INTEGER,

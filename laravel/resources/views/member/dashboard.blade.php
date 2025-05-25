@@ -145,18 +145,24 @@
                                     @endif
                                 </div>
                                 <div class="card-footer bg-transparent border-top-0 text-end">
-                                    <a href="{{ url('/event/' . $event['idevents']) }}"
+                                    <a href="{{ route('event.detail', ['id' => $event['idevents']]) }}}"
                                         class="btn btn-sm btn-outline-primary me-2">Lihat Detail</a>
                                     {{-- <a href="{{ url('/event/' . $event['idevents']) . '/daftar' }}"
                                         class="btn btn-sm btn-outline-primary">Daftar</a> --}}
-                                    <a href="{{ url('/event/' . $event['idevents']) . '/daftar' }}"
+                                    <a href="{{ route('event.daftar', ['id' => $event['idevents']]) }}"
                                         class="btn btn-sm btn-outline-primary daftar-btn">Daftar</a>
                                 </div>
                             </div>
                         </div>
                     @endforeach
+                    <li><a href="{{ route('event.saya') }}">Event Saya</a></li>
                 </div>
             </div>
+            {{-- <a href="{{ route('riwayat-event', ['user_id' => auth()->user()->id ?? 1]) }}" class="btn btn-primary"
+                style="margin-bottom: 20px; display: inline-block;">
+                Lihat Riwayat Event
+            </a> --}}
+
         </section>
 
         <!-- /Alt Services Section -->
@@ -353,27 +359,27 @@
                                 div.setAttribute('data-aos-delay', '100');
 
                                 div.innerHTML = `
-                                                                <div class="card shadow-sm h-100 border-0 position-relative overflow-hidden">
-                                                                    <div class="position-relative" >
-                                                                        <img src="/assets/img/services-1.jpg" class="card-img-top" alt="Event Image">
-                                                                        <div class="position-absolute top-0 start-0 m-2 d-flex flex-wrap gap-1">
-                                                                            ${categoryBadges}
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="card-body">
-                                                                        <h5 class="card-title mb-2">${event.name}</h5>
-                                                                        <p class="mb-1"><i class="bi bi-calendar-event"></i> ${event.date_start} - ${event.date_end}</p>
-                                                                        <p class="mb-1"><i class="bi bi-clock"></i> ${event.time}</p>
-                                                                        <p class="mb-1"><i class="bi bi-geo-alt"></i> ${event.location || 'Lokasi belum ditentukan'}</p>
-                                                                        <p class="mb-1"><i class="bi bi-cash-stack"></i> Biaya: ${event.registration_fee}</p>
-                                                                        <p class="mb-3"><i class="bi bi-people"></i> Peserta: ${event.max_participants}</p>
-                                                                    </div>
-                                                                    <div class="card-footer bg-transparent border-top-0 text-end">
-                                                                        <a href="/event/${event.idevents}" class="btn btn-sm btn-outline-primary me-2">Lihat Detail</a>
-                                                                        <a href="/event/${event.idevents}/daftar" class="btn btn-sm btn-outline-primary daftar-btn">Daftar</a>
-                                                                    </div>
-                                                                </div>
-                                                            `;
+                                                                            <div class="card shadow-sm h-100 border-0 position-relative overflow-hidden">
+                                                                                <div class="position-relative" >
+                                                                                    <img src="/assets/img/services-1.jpg" class="card-img-top" alt="Event Image">
+                                                                                    <div class="position-absolute top-0 start-0 m-2 d-flex flex-wrap gap-1">
+                                                                                        ${categoryBadges}
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="card-body">
+                                                                                    <h5 class="card-title mb-2">${event.name}</h5>
+                                                                                    <p class="mb-1"><i class="bi bi-calendar-event"></i> ${event.date_start} - ${event.date_end}</p>
+                                                                                    <p class="mb-1"><i class="bi bi-clock"></i> ${event.time}</p>
+                                                                                    <p class="mb-1"><i class="bi bi-geo-alt"></i> ${event.location || 'Lokasi belum ditentukan'}</p>
+                                                                                    <p class="mb-1"><i class="bi bi-cash-stack"></i> Biaya: ${event.registration_fee}</p>
+                                                                                    <p class="mb-3"><i class="bi bi-people"></i> Peserta: ${event.max_participants}</p>
+                                                                                </div>
+                                                                                <div class="card-footer bg-transparent border-top-0 text-end">
+                                                                                    <a href="/event/${event.idevents}" class="btn btn-sm btn-outline-primary me-2">Lihat Detail</a>
+                                                                                    <a href="/event/${event.idevents}/daftar" class="btn btn-sm btn-outline-primary daftar-btn">Daftar</a>
+                                                                                </div>
+                                                                            </div>
+                                                                        `;
                                 eventList.appendChild(div);
                                 return div;
                             });

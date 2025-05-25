@@ -497,6 +497,8 @@
                         window.location.href = "/admin/dashboard";
                     } else if (result.roles_idroles == 4) {
                         window.location.href = "/panit/dashboard";
+                    } else if (result.roles_idroles == 3) {
+                        window.location.href = "/keuangan/dashboard";
                     } else {
                         window.location.href = "/";
                     }

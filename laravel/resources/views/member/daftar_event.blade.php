@@ -93,7 +93,7 @@
                     <div class="col-lg-5">
                         <div class="card shadow-sm rounded p-4 border-0">
                             <h4 class="mb-4 fw-semibold text-primary">Form Pendaftaran</h4>
-                            <form action="" method="POST" id="registration-form">
+                            <form id="registration-form">
                                 @csrf
                                 <div class="mb-3">
                                     <label for="name" class="form-label fw-semibold">Nama Lengkap</label>
@@ -110,18 +110,19 @@
                                 <div class="mb-4">
                                     <label class="form-label fw-semibold">Pilihan Sesi</label>
 
-                                    <div class="form-check mb-2">
+                                    
+
+                                    @if (!empty($daftar_event['details']))
+                                        <div class="form-check mb-2">
                                         <input class="form-check-input" type="checkbox" id="checkAllSessions">
                                         <label class="form-check-label" for="checkAllSessions">
                                             Semua Sesi
                                         </label>
                                     </div>
-
-                                    @if (!empty($daftar_event['details']))
                                         @foreach ($daftar_event['details'] as $detail)
                                             <div class="form-check">
                                                 <input class="form-check-input sesi-checkbox" type="checkbox" name="sesi[]"
-                                                    value="{{ $detail['sesi'] }}" id="sesi_{{ $loop->index }}">
+                                                    value="{{ $detail['idevent_detail'] }}" id="sesi_{{ $loop->index }}">
                                                 <label class="form-check-label" for="sesi_{{ $loop->index }}">
                                                     {{ $detail['sesi'] }}
                                                 </label>
@@ -206,11 +207,9 @@
 
             sesiCheckboxes.forEach(cb => {
                 cb.addEventListener('change', function () {
-                    // Kalau salah satu tidak dicentang, uncheck "Semua Sesi"
                     if (!this.checked) {
                         checkAll.checked = false;
                     } else {
-                        // Kalau semua dicentang, centang "Semua Sesi"
                         if ([...sesiCheckboxes].every(x => x.checked)) {
                             checkAll.checked = true;
                         }
@@ -218,5 +217,88 @@
                 });
             });
         });
+
+        // daftar 
+        document.getElementById('registration-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const token = localStorage.getItem('token');
+            if (!token) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Oops...',
+                    text: 'Silakan login terlebih dahulu.',
+                });
+                return;
+            }
+
+            const decoded = jwt_decode(token);
+            const userId = decoded.id;
+
+            const selectedSesi = [...document.querySelectorAll('.sesi-checkbox:checked')]
+                .map(cb => cb.value);
+
+            if (selectedSesi.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Pilih Sesi',
+                    text: 'Pilih setidaknya satu sesi.',
+                });
+                return;
+            }
+
+            const konfirmasi = await Swal.fire({
+                title: 'Konfirmasi Pendaftaran',
+                text: 'Apakah kamu yakin ingin mendaftar pada sesi yang dipilih?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Daftar!',
+                cancelButtonText: 'Batal'
+            });
+
+            if (!konfirmasi.isConfirmed) {
+                return; 
+            }
+            const eventId = {{ $daftar_event['idevents'] }};
+            try {
+                const res = await fetch("http://localhost:3000/api/events/registrasi", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        eventId: eventId,
+                        sesi: selectedSesi
+                    })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: 'Registrasi berhasil!',
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal',
+                        text: data.message || 'Terjadi kesalahan saat registrasi.',
+                    });
+                }
+            } catch (error) {
+                console.error(error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Terjadi kesalahan saat registrasi.',
+                });
+            }
+        });
+
     </script>
+
 @endsection

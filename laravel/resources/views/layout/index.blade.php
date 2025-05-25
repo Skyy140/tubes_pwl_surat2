@@ -127,42 +127,52 @@
     <!-- Main JS File -->
     <script src="{{ asset('assets/js/main.js') }}"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("DOMContentLoaded", function () {
             const token = localStorage.getItem("token");
+            const loginMessageShown = sessionStorage.getItem("loginMessageShown");
 
             if (token) {
-                // Jika token ada, berarti sudah login
                 document.getElementById("auth-section").innerHTML = `
-                <div class="dropdown">
-                    <a class="btn-getstarted dropdown-toggle" href="#" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">Profil</a>
-                    <ul class="dropdown-menu" aria-labelledby="profileDropdown">
-                        <li><a class="dropdown-item" href="#" id="logoutBtn">Logout</a></li>
-                    </ul>
-                </div>
-                <div class="alert alert-success mt-3" role="alert" style="position: fixed; top: 70px; right: 20px; z-index: 9999;">
-                    Login berhasil, Selamat datang!
-                </div>
-            `;
+            <div class="dropdown">
+                <a class="btn-getstarted dropdown-toggle" href="#" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">Profil</a>
+                <ul class="dropdown-menu" aria-labelledby="profileDropdown">
+                    <li><a class="dropdown-item" href="#" id="logoutBtn">Logout</a></li>
+                </ul>
+            </div>
+        `;
 
-                // Menghilangkan pesan login setelah 5 detik
-                setTimeout(function() {
-                    const alertElement = document.querySelector('.alert-success');
-                    if (alertElement) {
-                        alertElement.remove();
-                    }
-                }, 3000);
+                if (!loginMessageShown) {
+                    const alertDiv = document.createElement("div");
+                    alertDiv.className = "alert alert-success mt-3";
+                    alertDiv.role = "alert";
+                    alertDiv.style = "position: fixed; top: 70px; right: 20px; z-index: 9999;";
+                    alertDiv.textContent = "Login berhasil, Selamat datang!";
+
+                    document.body.appendChild(alertDiv);
+
+                    setTimeout(() => {
+                        alertDiv.remove();
+                    }, 3000);
+
+                    sessionStorage.setItem("loginMessageShown", "true");
+                }
 
                 // Logout handler
-                document.getElementById("logoutBtn").addEventListener("click", function() {
+                document.getElementById("logoutBtn").addEventListener("click", function () {
                     localStorage.removeItem("token");
-                    window.location.href = "/"; // Redirect ke home
+                    sessionStorage.removeItem("loginMessageShown");
+                    window.location.href = "/";
                 });
             }
         });
+
     </script>
+
+
 
 
 </body>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 
 </html>
