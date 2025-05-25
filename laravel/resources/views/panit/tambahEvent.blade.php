@@ -62,11 +62,6 @@
                         <div id="eventDetailContainer"></div>
                         <button type="button" class="btn btn-info mt-2" id="btnAddEventDetail">Tambah Sesi</button>
                     </div>
-                    <div class="form-group">
-                        <label>Speaker</label>
-                        <div id="speakerContainer"></div>
-                        <button type="button" class="btn btn-warning mt-2" id="btnAddSpeaker">Tambah Speaker</button>
-                    </div>
                     <div id="formError" class="text-danger mb-3" style="display:none;"></div>
                     <button type="submit" class="btn btn-primary">Tambah Event</button>
                     <a href="/panit/event" class="btn btn-secondary">Batal</a>
@@ -141,6 +136,11 @@
                         <input type="text" class="form-control" name="details[${idx}][description]" required>
                     </div>
                 </div>
+                <div class="form-group mt-2">
+                    <label>Speaker untuk Sesi Ini</label>
+                    <div class="speakerContainer"></div>
+                    <button type="button" class="btn btn-warning mt-2 btnAddSpeaker">Tambah Speaker</button>
+                </div>
                 <button type="button" class="btn btn-danger btn-remove-detail mt-2">Hapus Sesi</button>
             `;
             container.appendChild(div);
@@ -152,35 +152,88 @@
             }
         });
 
-        // Speaker
-        function addSpeakerForm() {
-            const container = document.getElementById('speakerContainer');
-            const idx = container.children.length;
-            const div = document.createElement('div');
-            div.className = 'card p-3 mb-2 speaker-group';
-            div.innerHTML = `
-                <div class="form-row">
-                    <div class="form-group col-md-4">
-                        <label>Nama Speaker</label>
-                        <input type="text" class="form-control" name="speakers[${idx}][name]" required>
-                    </div>
-                    <div class="form-group col-md-4">
-                        <label>Deskripsi</label>
-                        <input type="text" class="form-control" name="speakers[${idx}][description]" required>
-                    </div>
-                    <div class="form-group col-md-4">
-                        <label>Photo Path</label>
-                        <input type="text" class="form-control" name="speakers[${idx}][photo_path]" required>
-                    </div>
-                </div>
-                <button type="button" class="btn btn-danger btn-remove-speaker mt-2">Hapus Speaker</button>
-            `;
-            container.appendChild(div);
+        // Speaker per sesi
+        // Dropdown speaker
+        let allSpeakers = [];
+        async function loadAllSpeakers() {
+            const res = await fetch('http://localhost:3000/api/events/admin/all-speakers');
+            allSpeakers = await res.json();
         }
-        document.getElementById('btnAddSpeaker').addEventListener('click', addSpeakerForm);
-        document.addEventListener('click', function(e) {
+
+        document.addEventListener('click', async function(e) {
+            if (e.target.classList.contains('btnAddSpeaker')) {
+                if (allSpeakers.length === 0) await loadAllSpeakers();
+                const eventDetailGroup = e.target.closest('.event-detail-group');
+                const speakerContainer = eventDetailGroup.querySelector('.speakerContainer');
+                const idx = speakerContainer.children.length;
+                const detailIdx = Array.from(document.getElementById('eventDetailContainer').children).indexOf(
+                    eventDetailGroup);
+                const div = document.createElement('div');
+                div.className = 'card p-3 mb-2 speaker-group';
+                // Dropdown + input deskripsi dan photo_path
+                div.innerHTML = `
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <label>Nama Speaker</label>
+                            <select class="form-control speaker-select" name="details[${detailIdx}][speakers][${idx}][idspeaker]">
+                                <option value="">-- Pilih Speaker --</option>
+                                ${allSpeakers.map(spk => `<option value="${spk.idspeaker}">${spk.name}</option>`).join('')}
+                                <option value="__new__">Lainnya (Input Baru)</option>
+                            </select>
+                            <input type="text" class="form-control mt-2 speaker-name-input" name="details[${detailIdx}][speakers][${idx}][name]" placeholder="Nama Speaker Baru" style="display:none;" />
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label>Deskripsi</label>
+                            <input type="text" class="form-control speaker-desc-input" name="details[${detailIdx}][speakers][${idx}][description]" required>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label>Photo Path</label>
+                            <input type="text" class="form-control speaker-photo-input" name="details[${detailIdx}][speakers][${idx}][photo_path]" required>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-danger btn-remove-speaker mt-2">Hapus Speaker</button>
+                `;
+                speakerContainer.appendChild(div);
+            }
             if (e.target.classList.contains('btn-remove-speaker')) {
                 e.target.parentElement.remove();
+            }
+        });
+
+        // Event delegation untuk dropdown speaker
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('speaker-select')) {
+                const select = e.target;
+                const group = select.closest('.speaker-group');
+                const descInput = group.querySelector('.speaker-desc-input');
+                const photoInput = group.querySelector('.speaker-photo-input');
+                const nameInput = group.querySelector('.speaker-name-input');
+                const selectedId = select.value;
+                if (selectedId === "__new__") {
+                    nameInput.style.display = '';
+                    nameInput.required = true;
+                    descInput.value = '';
+                    photoInput.value = '';
+                    descInput.readOnly = false;
+                    photoInput.readOnly = false;
+                } else if (selectedId) {
+                    const spk = allSpeakers.find(s => s.idspeaker == selectedId);
+                    if (spk) {
+                        nameInput.style.display = 'none';
+                        nameInput.required = false;
+                        descInput.value = spk.description || '';
+                        photoInput.value = spk.photo_path || '';
+                        descInput.readOnly = true;
+                        photoInput.readOnly = true;
+                    }
+                } else {
+                    nameInput.style.display = 'none';
+                    nameInput.required = false;
+                    descInput.value = '';
+                    photoInput.value = '';
+                    descInput.readOnly = false;
+                    photoInput.readOnly = false;
+                }
             }
         });
 
@@ -205,29 +258,45 @@
             };
             document.querySelectorAll('.event-detail-group').forEach((group, i) => {
                 const inputs = group.querySelectorAll('input');
+                const selects = group.querySelectorAll('select');
                 const detail = {};
+                // Ambil field detail
                 inputs.forEach(input => {
+                    // Cek apakah input speaker atau bukan
+                    if (input.name.includes('[speakers]')) return;
                     const matches = input.name.match(/\[(\w+)\]$/);
                     if (matches) {
                         const key = matches[1];
                         detail[key] = input.value;
                     }
                 });
-                data.details.push(detail);
-            });
-            // Ambil data speaker
-            data.speakers = [];
-            document.querySelectorAll('.speaker-group').forEach((group, i) => {
-                const inputs = group.querySelectorAll('input');
-                const speaker = {};
-                inputs.forEach(input => {
-                    const matches = input.name.match(/\[(\w+)\]$/);
-                    if (matches) {
-                        const key = matches[1];
-                        speaker[key] = input.value;
+                // Ambil speakers untuk sesi ini
+                detail.speakers = [];
+                group.querySelectorAll('.speaker-group').forEach((spkGroup, j) => {
+                    const spkInputs = spkGroup.querySelectorAll('input');
+                    const spkSelect = spkGroup.querySelector('select.speaker-select');
+                    const speaker = {};
+                    // Jika select ada dan terisi, simpan idspeaker
+                    if (spkSelect && spkSelect.value && spkSelect.value !== "__new__") {
+                        speaker.idspeaker = spkSelect.value;
+                        // Ambil juga description dan photo_path dari input (readonly)
+                        const descInput = spkGroup.querySelector('.speaker-desc-input');
+                        const photoInput = spkGroup.querySelector('.speaker-photo-input');
+                        if (descInput) speaker.description = descInput.value;
+                        if (photoInput) speaker.photo_path = photoInput.value;
+                    } else {
+                        // Speaker baru, ambil dari input
+                        spkInputs.forEach(input => {
+                            const matches = input.name.match(/\[(\w+)\]$/);
+                            if (matches) {
+                                const key = matches[1];
+                                speaker[key] = input.value;
+                            }
+                        });
                     }
+                    detail.speakers.push(speaker);
                 });
-                data.speakers.push(speaker);
+                data.details.push(detail);
             });
             try {
                 const response = await fetch('http://localhost:3000/api/events/admin/tambah-event', {

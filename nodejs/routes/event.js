@@ -221,7 +221,6 @@ router.post("/admin/tambah-event", async (req, res) => {
       coordinator,
       categories,
       details,
-      speakers,
     } = req.body;
     // 1. Insert ke tabel event
     const now = new Date();
@@ -253,10 +252,10 @@ router.post("/admin/tambah-event", async (req, res) => {
       }
     }
 
-    // 3. Insert ke tabel event_detail
-    let eventDetailInstances = [];
+    // 3. Insert ke tabel event_detail dan speaker per sesi
     if (Array.isArray(details)) {
       for (const det of details) {
+        // Insert event_detail
         const eventDetail = await EventDetail.create(
           {
             events_idevents: event.idevents,
@@ -268,29 +267,29 @@ router.post("/admin/tambah-event", async (req, res) => {
           },
           { transaction: t }
         );
-        eventDetailInstances.push(eventDetail);
-      }
-    }
-
-    // 4. Insert ke tabel speaker dan relasi ke event_detail_has_speaker
-    let speakerIds = [];
-    if (Array.isArray(speakers)) {
-      for (const spk of speakers) {
-        const speaker = await Speaker.create(
-          {
-            name: spk.name,
-            description: spk.description,
-            photo_path: spk.photo_path,
-          },
-          { transaction: t }
-        );
-        speakerIds.push(speaker.idspeaker);
-      }
-    }
-    // Hubungkan semua speaker ke semua sesi (event_detail)
-    if (speakerIds.length && eventDetailInstances.length) {
-      for (const eventDetail of eventDetailInstances) {
-        await eventDetail.addSpeakers(speakerIds, { transaction: t });
+        // Insert/relasi speakers untuk sesi ini
+        if (Array.isArray(det.speakers) && det.speakers.length > 0) {
+          for (const spk of det.speakers) {
+            let speakerInstance = null;
+            if (spk.idspeaker && spk.idspeaker !== "__new__") {
+              // Pilih speaker lama
+              speakerInstance = await Speaker.findByPk(spk.idspeaker);
+            } else if (spk.name) {
+              // Tambah speaker baru
+              speakerInstance = await Speaker.create(
+                {
+                  name: spk.name,
+                  description: spk.description,
+                  photo_path: spk.photo_path,
+                },
+                { transaction: t }
+              );
+            }
+            if (speakerInstance) {
+              await eventDetail.addSpeaker(speakerInstance, { transaction: t });
+            }
+          }
+        }
       }
     }
 
@@ -299,6 +298,18 @@ router.post("/admin/tambah-event", async (req, res) => {
   } catch (err) {
     await t.rollback();
     res.status(400).json({ message: err.message });
+  }
+});
+
+// API untuk mengambil semua speaker (untuk dropdown di tambah event)
+router.get("/admin/all-speakers", async (req, res) => {
+  try {
+    const speakers = await Speaker.findAll({
+      attributes: ["idspeaker", "name", "description", "photo_path"],
+    });
+    res.json(speakers);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 
@@ -471,7 +482,7 @@ router.get("/keuangan/registrasi", async (req, res) => {
           include: [
             {
               model: EventDetail,
-              as: "details", 
+              as: "details",
             },
           ],
         },
