@@ -328,6 +328,143 @@ router.post(
   }
 );
 
+// Edit event lengkap (event, event_detail, events_has_category) dengan upload poster
+router.post(
+  "/admin/edit-event/:id",
+  uploadPoster.single("poster"),
+  async (req, res) => {
+    const t = await require("../config/db").transaction();
+    try {
+      const eventId = req.params.id;
+      const {
+        name,
+        date_start,
+        date_end,
+        time,
+        location,
+        registration_fee,
+        max_participants,
+        description,
+        coordinator,
+      } = req.body;
+      let categories = req.body["categories[]"] || req.body.categories || [];
+      if (typeof categories === "string") categories = [categories];
+      let details = req.body.details;
+      if (typeof details === "string") details = JSON.parse(details);
+      let poster_path = null;
+      if (req.file) {
+        poster_path = "/poster/" + req.file.filename;
+      }
+      // 1. Update event
+      const event = await Event.findByPk(eventId, { transaction: t });
+      if (!event) {
+        await t.rollback();
+        return res.status(404).json({ message: "Event tidak ditemukan" });
+      }
+      event.name = name;
+      event.date_start = date_start;
+      event.date_end = date_end;
+      if (poster_path) event.poster_path = poster_path;
+      event.time = time;
+      event.location = location;
+      event.registration_fee = registration_fee;
+      event.max_participants = max_participants;
+      event.description = description;
+      event.coordinator = coordinator;
+      event.updated_at = new Date();
+      await event.save({ transaction: t });
+      // 2. Update categories (remove all, then add again)
+      await event.setCategories([], { transaction: t });
+      if (Array.isArray(categories)) {
+        for (const catId of categories) {
+          if (catId) {
+            await event.addCategory(catId, { transaction: t });
+          }
+        }
+      }
+      // 3. Update event_detail and speakers: remove all, then add again
+      // 3a. Hapus relasi event_detail_has_speaker terlebih dahulu
+      const eventDetails = await EventDetail.findAll({
+        where: { events_idevents: eventId },
+        transaction: t,
+      });
+      const eventDetailIds = eventDetails.map((ed) => ed.idevent_detail);
+      if (eventDetailIds.length > 0) {
+        // Hapus dari tabel pivot event_detail_has_speaker
+        await Event.sequelize.models.event_detail_has_speaker.destroy({
+          where: { event_detail_idevent_detail: eventDetailIds },
+          transaction: t,
+        });
+      }
+      // 3b. Hapus event_detail
+      await EventDetail.destroy({
+        where: { events_idevents: eventId },
+        transaction: t,
+      });
+      // 3c. Tambahkan ulang event_detail dan speakers
+      if (Array.isArray(details)) {
+        for (const det of details) {
+          const eventDetail = await EventDetail.create(
+            {
+              events_idevents: eventId,
+              sesi: det.sesi,
+              date: det.date,
+              time_start: det.time_start,
+              time_end: det.time_end,
+              description: det.description,
+            },
+            { transaction: t }
+          );
+          if (Array.isArray(det.speakers) && det.speakers.length > 0) {
+            for (const spk of det.speakers) {
+              let speakerInstance = null;
+              if (spk.idspeaker && spk.idspeaker !== "__new__") {
+                speakerInstance = await Speaker.findByPk(spk.idspeaker);
+              } else if (spk.name) {
+                speakerInstance = await Speaker.create(
+                  {
+                    name: spk.name,
+                    description: spk.description,
+                    photo_path: spk.photo_path,
+                  },
+                  { transaction: t }
+                );
+              }
+              if (speakerInstance) {
+                await eventDetail.addSpeaker(speakerInstance, {
+                  transaction: t,
+                });
+              }
+            }
+          }
+        }
+      }
+      await t.commit();
+      res.status(200).json({ message: "Event berhasil diupdate", event });
+    } catch (err) {
+      await t.rollback();
+      res.status(400).json({ message: err.message });
+    }
+  }
+);
+
+// PATCH: Inactivate event (set status to 'inactive')
+router.patch("/inactivate/:id", async (req, res) => {
+  try {
+    const event = await Event.findByPk(req.params.id);
+    if (!event)
+      return res.status(404).json({ message: "Event tidak ditemukan" });
+    if (event.status === "inactive") {
+      return res.status(400).json({ message: "Event sudah inactive" });
+    }
+    event.status = "inactive";
+    await event.save();
+    res.json({ message: "Status event berhasil diubah menjadi inactive" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // API untuk mengambil semua speaker (untuk dropdown di tambah event)
 router.get("/admin/all-speakers", async (req, res) => {
   try {

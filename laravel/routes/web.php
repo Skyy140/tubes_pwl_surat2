@@ -47,6 +47,9 @@ Route::get('/admin/edit-tim-panitia/{id}', [PanitiaController::class, 'edit'])->
 use App\Http\Controllers\PanitEventController;
 Route::get('/panit/event', [PanitEventController::class, 'index'])->name('panit.event');
 
+// Route for edit event form (panitia)
+Route::get('/panit/edit-event/{id}', [PanitEventController::class, 'edit'])->name('panit.editEvent');
+
 // Profile page route (admin)
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;

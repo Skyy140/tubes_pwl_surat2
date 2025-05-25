@@ -98,16 +98,136 @@
                     <td>${event.description ? event.description : '-'}</td>
                     <td>${event.coordinator ? event.coordinator : '-'}</td>
                     <td class="text-center">
-                        <button class="btn btn-info btn-sm lihat-detail-btn" data-event-id="${event.idevents}">Lihat Detail</button>
+                        <div class="d-flex justify-content-center" style="gap: 4px;">
+                            <button class="btn btn-info btn-sm lihat-detail-btn" style="min-width: 90px;" data-event-id="${event.idevents}">Lihat Detail</button>
+                            <a href="/panit/edit-event/${event.idevents}" title="Edit" class="btn btn-warning btn-sm" style="min-width: 90px;">Edit</a>
+                            <a href="#" title="Delete" class="btn btn-danger btn-sm delete-event-btn" style="min-width: 90px;">Delete</a>
+                        </div>
                     </td>
                 `;
                         tbody.appendChild(tr);
+
                     });
                 })
                 .catch(err => {
                     document.getElementById('event-table-body').innerHTML =
                         `<tr><td colspan="6">Gagal memuat data</td></tr>`;
                 });
+
+            // Modal HTML for delete confirmation
+            const modalHtml = `
+        <div class="modal fade" id="confirmDeleteEventModal" tabindex="-1" role="dialog" aria-labelledby="confirmDeleteEventModalLabel" aria-hidden="true">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="confirmDeleteEventModalLabel">Konfirmasi</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                Apakah anda yakin ingin mengubah event menjadi inaktif?
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Tidak</button>
+                <button type="button" class="btn btn-danger" id="confirm-inactivate-event-btn">Ya</button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+            let selectedEventId = null;
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.delete-event-btn')) {
+                    e.preventDefault();
+                    selectedEventId = e.target.closest('.delete-event-btn').getAttribute('data-event-id');
+                    $('#confirmDeleteEventModal').modal('show');
+                }
+            });
+
+            document.getElementById('confirm-inactivate-event-btn').addEventListener('click', function() {
+                if (!selectedEventId) return;
+                fetch(`http://localhost:3000/api/events/inactivate/${selectedEventId}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(async res => {
+                        const result = await res.json();
+                        $('#confirmDeleteEventModal').modal('hide');
+                        let alertDiv = document.querySelector('.alert-success, .alert-danger');
+                        if (alertDiv) alertDiv.remove();
+                        if (res.ok) {
+                            const notif = document.createElement('div');
+                            notif.className = 'alert alert-success';
+                            notif.innerText = 'Berhasil mengubah status event menjadi inaktif';
+                            document.querySelector('.container-fluid').prepend(notif);
+                        } else {
+                            const notif = document.createElement('div');
+                            notif.className = 'alert alert-danger';
+                            notif.innerText = result.message || result.error ||
+                                'Gagal mengubah status event';
+                            document.querySelector('.container-fluid').prepend(notif);
+                        }
+                        setTimeout(() => {
+                            let alertDiv = document.querySelector(
+                                '.alert-success, .alert-danger');
+                            if (alertDiv) alertDiv.remove();
+                        }, 3000);
+                        return fetch('http://localhost:3000/api/events');
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        const tbody = document.getElementById('event-table-body');
+                        tbody.innerHTML = '';
+                        data.forEach(event => {
+                            const tr = document.createElement('tr');
+                            let posterHtml = '-';
+                            if (event.poster_path) {
+                                let posterFileName = event.poster_path.split('/').pop();
+                                let posterUrl =
+                                    `http://localhost:3000/poster/${posterFileName}`;
+                                posterHtml =
+                                    `<img src="${posterUrl}" alt="Poster" style="max-width:60px;max-height:60px;">`;
+                            }
+                            tr.innerHTML = `
+                    <td>${event.idevents}</td>
+                    <td>${event.name}</td>
+                    <td>${event.date_start ? event.date_start : '-'}</td>
+                    <td>${event.date_end ? event.date_end : '-'}</td>
+                    <td>${posterHtml}</td>
+                    <td>${event.time ? event.time : '-'}</td>
+                    <td>${event.location ? event.location : '-'}</td>
+                    <td>${event.registration_fee ? event.registration_fee : '-'}</td>
+                    <td>${event.max_participants ? event.max_participants : '-'}</td>
+                    <td>${event.status ? event.status : '-'}</td>
+                    <td>${event.description ? event.description : '-'}</td>
+                    <td>${event.coordinator ? event.coordinator : '-'}</td>
+                    <td class="text-center">
+                        <button class="btn btn-info btn-sm lihat-detail-btn" data-event-id="${event.idevents}">Lihat Detail</button>
+                        <a href="/panit/edit-event/${event.idevents}" title="Edit" class="btn btn-warning btn-sm mr-1"><i class="fas fa-edit"></i></a>
+                        <a href="#" title="Delete" class="btn btn-danger btn-sm delete-event-btn" data-event-id="${event.idevents}"><i class="fas fa-trash-alt"></i></a>
+                    </td>
+                `;
+                            tbody.appendChild(tr);
+                        });
+                    })
+                    .catch(err => {
+                        let alertDiv = document.querySelector('.alert-success, .alert-danger');
+                        if (alertDiv) alertDiv.remove();
+                        const notif = document.createElement('div');
+                        notif.className = 'alert alert-danger';
+                        notif.innerText = 'Gagal mengubah status event';
+                        document.querySelector('.container-fluid').prepend(notif);
+                        setTimeout(() => {
+                            let alertDiv = document.querySelector(
+                                '.alert-success, .alert-danger');
+                            if (alertDiv) alertDiv.remove();
+                        }, 3000);
+                    });
+            });
 
             // Untuk admin: tampilkan event_detail (date, sesi, time_start, time_end, description, speaker, kategori) hanya untuk event yang dipilih
             document.addEventListener('click', function(e) {
