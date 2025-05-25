@@ -75,12 +75,21 @@
                     tbody.innerHTML = '';
                     data.forEach(event => {
                         const tr = document.createElement('tr');
+                        // Ambil nama file poster dari event.poster_path, lalu buat path ke public/poster di nodejs
+                        let posterHtml = '-';
+                        if (event.poster_path) {
+                            // Jika poster_path sudah berupa nama file saja, gunakan langsung. Jika path, ambil nama file saja.
+                            let posterFileName = event.poster_path.split('/').pop();
+                            let posterUrl = `http://localhost:3000/poster/${posterFileName}`;
+                            posterHtml =
+                                `<img src="${posterUrl}" alt="Poster" style="max-width:60px;max-height:60px;">`;
+                        }
                         tr.innerHTML = `
                     <td>${event.idevents}</td>
                     <td>${event.name}</td>
                     <td>${event.date_start ? event.date_start : '-'}</td>
                     <td>${event.date_end ? event.date_end : '-'}</td>
-                    <td>${event.poster_path ? `<img src="${event.poster_path}" alt="Poster" style="max-width:60px;max-height:60px;">` : '-'}</td>
+                    <td>${posterHtml}</td>
                     <td>${event.time ? event.time : '-'}</td>
                     <td>${event.location ? event.location : '-'}</td>
                     <td>${event.registration_fee ? event.registration_fee : '-'}</td>

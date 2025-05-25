@@ -21,8 +21,14 @@
                         <input type="date" class="form-control" id="date_end" name="date_end" required>
                     </div>
                     <div class="form-group">
-                        <label for="poster_path">Poster (URL)</label>
-                        <input type="text" class="form-control" id="poster_path" name="poster_path">
+                        <label for="poster_path">Poster (Gambar)</label>
+                        <div class="custom-file mb-2">
+                            <input type="file" class="custom-file-input" id="poster_path" name="poster_path"
+                                accept="image/*" required>
+                            <label class="custom-file-label" for="poster_path">Pilih file gambar...</label>
+                        </div>
+                        <img id="previewPoster" src="#" alt="Preview Poster"
+                            style="max-width:150px;max-height:150px;display:none;margin-top:10px;" />
                     </div>
                     <div class="form-group">
                         <label for="time">Waktu (HH:MM:SS)</label>
@@ -237,32 +243,57 @@
             }
         });
 
-        // Submit form
+        // Preview poster & update label
+        document.getElementById('poster_path').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('previewPoster');
+            const label = document.querySelector('label.custom-file-label[for="poster_path"]');
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    preview.src = ev.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+                if (label) label.textContent = file.name;
+            } else {
+                preview.src = '#';
+                preview.style.display = 'none';
+                if (label) label.textContent = 'Pilih file gambar...';
+            }
+        });
+
+        // Submit form dengan FormData (upload file)
         document.getElementById('formTambahEvent').addEventListener('submit', async function(e) {
             e.preventDefault();
             const form = e.target;
-            const data = {
-                name: form.name.value,
-                date_start: form.date_start.value,
-                date_end: form.date_end.value,
-                poster_path: form.poster_path.value,
-                time: form.time.value,
-                location: form.location.value,
-                registration_fee: form.registration_fee.value,
-                max_participants: form.max_participants.value,
-                description: form.description.value,
-                coordinator: form.coordinator.value,
-                categories: Array.from(document.querySelectorAll('.category-select')).map(s => s.value)
-                    .filter(Boolean),
-                details: []
-            };
+            const formData = new FormData();
+            formData.append('name', form.name.value);
+            formData.append('date_start', form.date_start.value);
+            formData.append('date_end', form.date_end.value);
+            formData.append('time', form.time.value);
+            formData.append('location', form.location.value);
+            formData.append('registration_fee', form.registration_fee.value);
+            formData.append('max_participants', form.max_participants.value);
+            formData.append('description', form.description.value);
+            formData.append('coordinator', form.coordinator.value);
+            // Poster file
+            if (form.poster_path.files[0]) {
+                formData.append('poster', form.poster_path.files[0]);
+            }
+            // Kategori
+            Array.from(document.querySelectorAll('.category-select')).map(s => s.value).filter(Boolean).forEach(
+                cat => {
+                    formData.append('categories[]', cat);
+                });
+            // Details (sesi + speakers)
+            const details = [];
             document.querySelectorAll('.event-detail-group').forEach((group, i) => {
                 const inputs = group.querySelectorAll('input');
                 const selects = group.querySelectorAll('select');
                 const detail = {};
                 // Ambil field detail
                 inputs.forEach(input => {
-                    // Cek apakah input speaker atau bukan
                     if (input.name.includes('[speakers]')) return;
                     const matches = input.name.match(/\[(\w+)\]$/);
                     if (matches) {
@@ -270,22 +301,18 @@
                         detail[key] = input.value;
                     }
                 });
-                // Ambil speakers untuk sesi ini
                 detail.speakers = [];
                 group.querySelectorAll('.speaker-group').forEach((spkGroup, j) => {
                     const spkInputs = spkGroup.querySelectorAll('input');
                     const spkSelect = spkGroup.querySelector('select.speaker-select');
                     const speaker = {};
-                    // Jika select ada dan terisi, simpan idspeaker
                     if (spkSelect && spkSelect.value && spkSelect.value !== "__new__") {
                         speaker.idspeaker = spkSelect.value;
-                        // Ambil juga description dan photo_path dari input (readonly)
                         const descInput = spkGroup.querySelector('.speaker-desc-input');
                         const photoInput = spkGroup.querySelector('.speaker-photo-input');
                         if (descInput) speaker.description = descInput.value;
                         if (photoInput) speaker.photo_path = photoInput.value;
                     } else {
-                        // Speaker baru, ambil dari input
                         spkInputs.forEach(input => {
                             const matches = input.name.match(/\[(\w+)\]$/);
                             if (matches) {
@@ -296,15 +323,13 @@
                     }
                     detail.speakers.push(speaker);
                 });
-                data.details.push(detail);
+                details.push(detail);
             });
+            formData.append('details', JSON.stringify(details));
             try {
                 const response = await fetch('http://localhost:3000/api/events/admin/tambah-event', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
+                    body: formData
                 });
                 const result = await response.json();
                 if (response.ok) {

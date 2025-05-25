@@ -204,102 +204,129 @@ router.get("/admin/event-details/:eventId", async (req, res) => {
   }
 });
 
-// Tambah event lengkap (event, event_detail, events_has_category)
-router.post("/admin/tambah-event", async (req, res) => {
-  const t = await require("../config/db").transaction();
-  try {
-    const {
-      name,
-      date_start,
-      date_end,
-      poster_path,
-      time,
-      location,
-      registration_fee,
-      max_participants,
-      description,
-      coordinator,
-      categories,
-      details,
-    } = req.body;
-    // 1. Insert ke tabel event
-    const now = new Date();
-    const event = await Event.create(
-      {
+// Tambah event lengkap (event, event_detail, events_has_category) dengan upload poster
+const posterStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const dest = path.join(__dirname, "../public/poster");
+    if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
+    cb(null, dest);
+  },
+  filename: function (req, file, cb) {
+    const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, unique + path.extname(file.originalname));
+  },
+});
+const uploadPoster = multer({ storage: posterStorage });
+
+router.post(
+  "/admin/tambah-event",
+  uploadPoster.single("poster"),
+  async (req, res) => {
+    const t = await require("../config/db").transaction();
+    try {
+      // Data dari form-data
+      const {
         name,
         date_start,
         date_end,
-        poster_path,
         time,
         location,
         registration_fee,
         max_participants,
         description,
         coordinator,
-        status: "active",
-        created_at: now,
-        updated_at: now,
-      },
-      { transaction: t }
-    );
+      } = req.body;
+      // categories[] dan details (JSON string)
+      let categories = req.body["categories[]"] || req.body.categories || [];
+      if (typeof categories === "string") categories = [categories];
+      let details = req.body.details;
+      if (typeof details === "string") details = JSON.parse(details);
+      // Poster
+      let poster_path = null;
+      if (req.file) {
+        poster_path = "/poster/" + req.file.filename;
+      }
+      // 1. Insert ke tabel event
+      const now = new Date();
+      const event = await Event.create(
+        {
+          name,
+          date_start,
+          date_end,
+          poster_path,
+          time,
+          location,
+          registration_fee,
+          max_participants,
+          description,
+          coordinator,
+          status: "active",
+          created_at: now,
+          updated_at: now,
+        },
+        { transaction: t }
+      );
 
-    // 2. Insert ke tabel events_has_category
-    if (Array.isArray(categories)) {
-      for (const catId of categories) {
-        if (catId) {
-          await event.addCategory(catId, { transaction: t });
+      // 2. Insert ke tabel events_has_category
+      if (Array.isArray(categories)) {
+        for (const catId of categories) {
+          if (catId) {
+            await event.addCategory(catId, { transaction: t });
+          }
         }
       }
-    }
 
-    // 3. Insert ke tabel event_detail dan speaker per sesi
-    if (Array.isArray(details)) {
-      for (const det of details) {
-        // Insert event_detail
-        const eventDetail = await EventDetail.create(
-          {
-            events_idevents: event.idevents,
-            sesi: det.sesi,
-            date: det.date,
-            time_start: det.time_start,
-            time_end: det.time_end,
-            description: det.description,
-          },
-          { transaction: t }
-        );
-        // Insert/relasi speakers untuk sesi ini
-        if (Array.isArray(det.speakers) && det.speakers.length > 0) {
-          for (const spk of det.speakers) {
-            let speakerInstance = null;
-            if (spk.idspeaker && spk.idspeaker !== "__new__") {
-              // Pilih speaker lama
-              speakerInstance = await Speaker.findByPk(spk.idspeaker);
-            } else if (spk.name) {
-              // Tambah speaker baru
-              speakerInstance = await Speaker.create(
-                {
-                  name: spk.name,
-                  description: spk.description,
-                  photo_path: spk.photo_path,
-                },
-                { transaction: t }
-              );
-            }
-            if (speakerInstance) {
-              await eventDetail.addSpeaker(speakerInstance, { transaction: t });
+      // 3. Insert ke tabel event_detail dan speaker per sesi
+      if (Array.isArray(details)) {
+        for (const det of details) {
+          // Insert event_detail
+          const eventDetail = await EventDetail.create(
+            {
+              events_idevents: event.idevents,
+              sesi: det.sesi,
+              date: det.date,
+              time_start: det.time_start,
+              time_end: det.time_end,
+              description: det.description,
+            },
+            { transaction: t }
+          );
+          // Insert/relasi speakers untuk sesi ini
+          if (Array.isArray(det.speakers) && det.speakers.length > 0) {
+            for (const spk of det.speakers) {
+              let speakerInstance = null;
+              if (spk.idspeaker && spk.idspeaker !== "__new__") {
+                // Pilih speaker lama
+                speakerInstance = await Speaker.findByPk(spk.idspeaker);
+              } else if (spk.name) {
+                // Tambah speaker baru
+                speakerInstance = await Speaker.create(
+                  {
+                    name: spk.name,
+                    description: spk.description,
+                    photo_path: spk.photo_path,
+                  },
+                  { transaction: t }
+                );
+              }
+              if (speakerInstance) {
+                await eventDetail.addSpeaker(speakerInstance, {
+                  transaction: t,
+                });
+              }
             }
           }
         }
       }
-    }
 
-    await t.commit();
-    res.status(201).json({ message: "Event berhasil ditambahkan", event });
-  } catch (err) {
-    await t.rollback();
-    res.status(400).json({ message: err.message });
+      await t.commit();
+      res.status(201).json({ message: "Event berhasil ditambahkan", event });
+    } catch (err) {
+      await t.rollback();
+      res.status(400).json({ message: err.message });
+    }
   }
-});
+);
 
 // API untuk mengambil semua speaker (untuk dropdown di tambah event)
 router.get("/admin/all-speakers", async (req, res) => {

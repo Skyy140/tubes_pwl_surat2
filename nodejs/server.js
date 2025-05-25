@@ -6,15 +6,16 @@ const sequelize = require("./config/db"); // koneksi DB
 const eventsRouter = require("./routes/event"); // router event
 const authRouter = require("./routes/auth"); // router login (baru)
 const userRouter = require("./routes/user"); // router user (keuangan)
-const path = require('path');
+const path = require("path");
 
 const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors()); // aktifkan CORS agar bisa diakses dari frontend
-app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
+// Tambahkan static untuk poster
+app.use("/poster", express.static(path.join(__dirname, "public/poster")));
 app.use("/", eventsRouter);
-
 
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
