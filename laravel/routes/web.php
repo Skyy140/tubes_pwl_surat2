@@ -50,6 +50,10 @@ Route::get('/panit/event', [PanitEventController::class, 'index'])->name('panit.
 // Route for edit event form (panitia)
 Route::get('/panit/edit-event/{id}', [PanitEventController::class, 'edit'])->name('panit.editEvent');
 
+Route::get('/panit/scan', function () {
+    return view('panit.scan');
+})->name('panit.scan');
+
 // Profile page route (admin)
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
@@ -70,6 +74,24 @@ Route::get('/admin/profile', function () {
     }
     return view('admin.profile', compact('user'));
 })->name('admin.profile');
+
+Route::get('/panit/profile', function () {
+    // Ambil id user dari session (misal 'user_id'), sesuaikan dengan implementasi login kamu
+    $userId = session('user_id');
+    $user = [
+        'name' => '',
+        'email' => '',
+        'status' => '',
+    ];
+    if ($userId) {
+        // Ambil data user dari Node.js
+        $response = Http::get('http://localhost:3000/api/users/profile/' . $userId);
+        if ($response->successful()) {
+            $user = $response->json();
+        }
+    }
+    return view('panit.profile', compact('user'));
+})->name('panit.profile');
 
 Route::get('/panit/dashboard', function () {
     return view('panit.dashboard');

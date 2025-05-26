@@ -34,6 +34,12 @@
             <span>Event</span></a>
     </li>
 
+    <!-- Nav Item - Tim Keuangan -->
+    <li class="nav-item{{ request()->is('panit/scan') ? ' active' : '' }}">
+        <a class="nav-link" href="/panit/scan">
+            <i class="fas fa-fw fa-chart-area"></i>
+            <span>Scan QR</span></a>
+    </li>
     {{-- <!-- Nav Item - Pages Collapse Menu -->
     <li class="nav-item">
         <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo"
