@@ -77,7 +77,7 @@ Registrasi.belongsTo(User, {
 
 Event.hasMany(Registrasi, {
   foreignKey: "events_idevents",
-  // as: "registrasi",
+  as: "registrasi",
 });
 Registrasi.belongsTo(Event, {
   foreignKey: "events_idevents",

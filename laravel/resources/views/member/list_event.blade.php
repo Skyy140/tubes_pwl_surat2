@@ -13,11 +13,8 @@
 				<table id="eventTable" class="display table table-bordered table-striped" style="width:100%">
 					<thead class="table-dark">
 						<tr>
-							<th>No</th> 
+							<th>No</th>
 							<th>Nama Event</th>
-							<th>Sesi</th>
-							<th>Tanggal</th>
-							<th>Waktu</th>
 							<th>Status</th>
 							<th>Bukti Pembayaran</th>
 							<th>Aksi</th>
@@ -106,74 +103,26 @@
 				const eventsWithStatus = new Set();
 				const eventsWithName = new Set();
 
-				let no = 1
-				const rows = data.map(registrasi => {
-					if (!registrasi.registrasiDetail || registrasi.registrasiDetail.length === 0) {
-						return `
+				const rows = data.map((registrasi, index) => {
+					const detail = registrasi.registrasiDetail?.[0];
+					const ed = detail?.eventDetail || {};
+					const event = ed.event || {};
+
+					return `
 							<tr>
-								<td>-</td>
-								<td colspan="4" class="text-center">Belum ada sesi</td>
-								<td style="text-align: center;">
+								<td>${index + 1}</td>
+								<td>${event.name || '-'}</td>
+								<td><strong>${registrasi.status || '-'}</strong></td>
+								<td class="text-center">
 									<button class="btn btn-sm btn-primary upload-btn" data-id="${registrasi.idregistrations}">Upload Bukti</button>
 								</td>
-								<td style="text-align: center;">
-									<button class="btn btn-sm btn-success update-btn" data-id="${registrasi.idregistrations}">Update</button>
-									<button class="btn btn-sm btn-danger delete-btn" data-id="${registrasi.idregistrations}">Delete</button>
+								<td class="text-center">
+									<a href="/event-saya/${event.idevents}" class="btn btn-sm btn-primary">Detail</a>
+									<button class="btn btn-sm btn-danger delete-btn" data-id="${registrasi.idregistrations}">Hapus</button>
 								</td>
 							</tr>
 						`;
-					}
-
-					return registrasi.registrasiDetail.map((detail, index) => {
-						const ed = detail.eventDetail || {};
-						const event = ed.event || {};
-						const eventId = event.idevents;
-						const eventName = event.name || '-';
-
-						let showUploadBtn = false;
-						if (!eventsWithButton.has(eventId)) {
-							showUploadBtn = true;
-							eventsWithButton.add(eventId);
-						}
-
-						let statusContent = '';
-						if (!eventsWithStatus.has(eventId)) {
-							statusContent = `<strong>${registrasi.status || '-'}</strong>`;
-							eventsWithStatus.add(eventId);
-						} else {
-							statusContent = ''; 
-						}
-
-						let eventNameContent = '';
-						if (!eventsWithName.has(eventId)) {
-							eventNameContent = eventName;
-							eventsWithName.add(eventId);
-						} else {
-							eventNameContent = ''; 
-						}
-						
-						return `
-							<tr>
-								<td>${no++}</td>
-								<td>${eventNameContent}</td>
-								<td>${ed.sesi || '-'}</td>
-								<td>${formatTanggal(ed.date)}</td>
-								<td>${ed.time_start || '-'} - ${ed.time_end || '-'}</td>
-								<td>${statusContent}</td>
-								<td style="text-align: center;">
-									${showUploadBtn ? `<button class="btn btn-sm btn-primary upload-btn" data-id="${registrasi.idregistrations}">Upload Bukti</button>` : ''}
-								</td>
-								<td style="text-align: center;">
-									<button class="btn btn-sm btn-success update-btn" data-id="${registrasi.idregistrations}">Update</button>
-									<button class="btn btn-sm btn-danger delete-btn" data-id="${registrasi.idregistrations}">Delete</button>
-								</td>
-							</tr>
-						`;
-					}).join('');
 				}).join('');
-
-
-
 				tableBody.html(rows);
 
 				if (!$.fn.DataTable.isDataTable('#eventTable')) {
@@ -258,6 +207,52 @@
 				});
 			}
 		});
+
+		$('#eventTableBody').on('click', '.delete-btn', async function () {
+			const registrasiId = $(this).data('id');
+			const token = localStorage.getItem('token');
+
+			const confirmResult = await Swal.fire({
+				title: 'Yakin ingin menghapus?',
+				text: "Data registrasi ini akan dihapus secara permanen.",
+				icon: 'warning',
+				showCancelButton: true,
+				confirmButtonColor: '#d33',
+				cancelButtonColor: '#3085d6',
+				confirmButtonText: 'Ya, hapus!',
+				cancelButtonText: 'Batal'
+			});
+
+			if (confirmResult.isConfirmed) {
+				try {
+					const res = await fetch(`http://localhost:3000/api/events/registrasi/${registrasiId}`, {
+						method: 'DELETE',
+						headers: {
+							'Authorization': `Bearer ${token}`
+						}
+					});
+
+					const result = await res.json();
+
+					if (!res.ok) throw new Error(result.message || 'Gagal menghapus registrasi');
+
+					await Swal.fire({
+						icon: 'success',
+						title: 'Terhapus',
+						text: 'Registrasi berhasil dihapus.',
+					});
+
+					loadEventsSaya();
+				} catch (err) {
+					Swal.fire({
+						icon: 'error',
+						title: 'Gagal',
+						text: err.message,
+					});
+				}
+			}
+		});
+
 
 	</script>
 @endsection

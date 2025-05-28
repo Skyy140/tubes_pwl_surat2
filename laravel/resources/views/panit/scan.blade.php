@@ -75,29 +75,51 @@
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script>
         function onScanSuccess(decodedText, decodedResult) {
-            document.getElementById('qr-result').innerHTML =
-                `<div class='alert alert-success'>QR Terdeteksi: ${decodedText}</div>`;
-            // Lakukan aksi lain, misal AJAX ke server
+            try {
+                const data = JSON.parse(decodedText);
+
+                const html = `
+                <div class="alert alert-success">
+                    <strong>QR Terdeteksi!</strong><br><br>
+                    <b>User:</b><br>
+                    - Nama: ${data.user.name}<br>
+                    - Email: ${data.user.email}<br><br>
+
+                    <b>Event:</b><br>
+                    - ID: ${data.event.id}<br>
+                    - Nama: ${data.event.name}<br><br>
+
+                    <b>Registrasi:</b><br>
+                    - ID Registrasi: ${data.registrasi.id}<br>
+                    - Status: ${data.registrasi.status}
+                </div>
+            `;
+                document.getElementById('qr-result').innerHTML = html;
+                document.getElementById('qr-error').innerText = '';
+            } catch (e) {
+                document.getElementById('qr-result').innerHTML = '';
+                document.getElementById('qr-error').innerText = "QR tidak valid atau format salah.";
+            }
         }
 
         function onScanError(errorMessage) {
             document.getElementById('qr-error').innerText = errorMessage;
         }
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             if (document.getElementById('qr-reader')) {
                 if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                     navigator.mediaDevices.getUserMedia({
-                            video: true
-                        })
-                        .then(function(stream) {
+                        video: true
+                    })
+                        .then(function (stream) {
                             stream.getTracks().forEach(track => track.stop());
                             const html5QrCode = new Html5Qrcode("qr-reader");
                             html5QrCode.start({
-                                    facingMode: "environment"
-                                }, {
-                                    fps: 10,
-                                    qrbox: 250
-                                },
+                                facingMode: "environment"
+                            }, {
+                                fps: 10,
+                                qrbox: 250
+                            },
                                 onScanSuccess,
                                 onScanError
                             ).catch(err => {
@@ -105,7 +127,7 @@
                                     'Gagal mengakses kamera: ' + err;
                             });
                         })
-                        .catch(function(err) {
+                        .catch(function (err) {
                             document.getElementById('qr-error').innerText =
                                 'Izin kamera ditolak atau tidak tersedia.';
                         });

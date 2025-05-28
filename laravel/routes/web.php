@@ -111,7 +111,23 @@ Route::get('/panit/tambah-event', function () {
 Route::get('/event-saya', function () {
     return view('member.list_event'); 
 })->name('event.saya');
+Route::get('/event-saya/{id}', function () {
+	return view('member.list_event_detail'); // file: resources/views/event-detail.blade.php
+});
+Route::get('/riwayat-pembayaran', function () {
+    return view('member.riwayat_pembayaran'); 
+})->name('riwayat.pembayaran');
+Route::get('/event-saya/update-bukti/{registrasiId}', function ($registrasiId) {
+    return view('member.update_bukti', compact('registrasiId'));
+});
+
+
 
 Route::get('/keuangan/dashboard', function () {
     return view('keuangan.dashboard');
 })->name('keuangan.dashboard');
+// Route::get('/keuangan/event/event-detail/{id}', [EventController::class, 'showEventDetail'])->name('keuangan.event.detail');
+Route::get('/keuangan/event/event-detail/{id}', function () {
+    return view('keuangan.detail-event');
+})->name('keuangan.event.detail');
+

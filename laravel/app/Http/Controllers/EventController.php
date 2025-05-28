@@ -73,4 +73,6 @@ class EventController extends Controller
 
         return view('member.list_event', compact('registrations'));
     }
+
+
 }

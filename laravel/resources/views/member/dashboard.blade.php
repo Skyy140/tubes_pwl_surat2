@@ -156,6 +156,7 @@
                         </div>
                     @endforeach
                     <li><a href="{{ route('event.saya') }}">Event Saya</a></li>
+                    <li><a href="{{ route('riwayat.pembayaran') }}">Riwayat Pembayaran</a></li>
                 </div>
             </div>
             {{-- <a href="{{ route('riwayat-event', ['user_id' => auth()->user()->id ?? 1]) }}" class="btn btn-primary"
