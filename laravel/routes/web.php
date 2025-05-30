@@ -112,7 +112,7 @@ Route::get('/event-saya', function () {
     return view('member.list_event'); 
 })->name('event.saya');
 Route::get('/event-saya/{id}', function () {
-	return view('member.list_event_detail'); // file: resources/views/event-detail.blade.php
+    return view('member.list_event_detail'); // file: resources/views/event-detail.blade.php
 });
 Route::get('/riwayat-pembayaran', function () {
     return view('member.riwayat_pembayaran'); 
@@ -131,3 +131,7 @@ Route::get('/keuangan/event/event-detail/{id}', function () {
     return view('keuangan.detail-event');
 })->name('keuangan.event.detail');
 
+// Sertifikat Event (for panitia)
+Route::get('/panit/sertif', function () {
+    return view('panit.sertif');
+})->name('panit.sertif');

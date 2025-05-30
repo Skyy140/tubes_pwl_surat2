@@ -14,6 +14,7 @@ const {
   Payment,
   RegistrasiDetail,
   User,
+  Attendance,
 } = require("../models/semuaRelasi");
 
 router.get("/", async (req, res) => {
@@ -1068,7 +1069,6 @@ router.post("/registrasi/:id/approve", async (req, res) => {
     const pdfDir = path.join(__dirname, "../public/uploads/bukti_pembayaran");
     if (!fs.existsSync(pdfDir)) fs.mkdirSync(pdfDir, { recursive: true });
 
-    
     const pdfFileName = `${UserName}-${EventName}-${id}-${timestamp}.pdf`;
     const pdfFilePath = path.join(pdfDir, pdfFileName);
 
@@ -1159,4 +1159,80 @@ router.post("/registrasi/:id/reject", async (req, res) => {
 });
 // end reject approve
 
+// API untuk sertif.blade.php: event + kolom sesi (dari event_detail)
+router.get("/api/events-sertif", async (req, res) => {
+  try {
+    const events = await Event.findAll({
+      attributes: ["idevents", "name", "date_start", "date_end", "status"],
+      include: [
+        {
+          model: EventDetail,
+          as: "details",
+          attributes: ["sesi"],
+        },
+      ],
+      order: [["idevents", "DESC"]],
+    });
+    res.json(events);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+router.get("/api/attendances/users", async (req, res) => {
+  try {
+    const { eventId, sesi } = req.query;
+    if (!eventId || !sesi) {
+      return res.status(400).json({ message: "eventId dan sesi wajib diisi" });
+    }
+
+    const attendances = await Attendance.findAll({
+      where: { status: "attend" },
+      include: [
+        {
+          model: RegistrasiDetail,
+          include: [
+            {
+              model: EventDetail,
+              as: "eventDetail",
+              where: {
+                sesi: sesi,
+                events_idevents: eventId,
+              },
+              include: [
+                {
+                  model: Event,
+                  as: "event",
+                },
+              ],
+            },
+            {
+              model: Registrasi,
+              include: [
+                {
+                  model: User,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    const results = attendances.map((a) => {
+      const rd = a.RegistrasiDetail;
+      const reg = rd?.Registrasi;
+      const user = reg?.user || reg?.User;
+      return {
+        user_name: user?.name || "-",
+        user_id: user?.idusers || "-",
+      };
+    });
+
+    res.json(results);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Terjadi kesalahan saat memuat data." });
+  }
+});
 module.exports = router;

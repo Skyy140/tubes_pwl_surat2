@@ -27,11 +27,19 @@
         DATA
     </div>
 
-    <!-- Nav Item - Tim Keuangan -->
+
+    <!-- Nav Item - Event -->
     <li class="nav-item{{ request()->is('panit/event') ? ' active' : '' }}">
         <a class="nav-link" href="/panit/event">
             <i class="fas fa-fw fa-chart-area"></i>
             <span>Event</span></a>
+    </li>
+
+    <!-- Nav Item - Sertifikat Event -->
+    <li class="nav-item{{ request()->is('panit/sertif') ? ' active' : '' }}">
+        <a class="nav-link" href="/panit/sertif">
+            <i class="fas fa-fw fa-certificate"></i>
+            <span>Sertifikat Event</span></a>
     </li>
 
     <!-- Nav Item - Tim Keuangan -->
