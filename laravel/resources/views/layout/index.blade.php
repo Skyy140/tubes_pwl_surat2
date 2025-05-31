@@ -33,7 +33,7 @@
     <header id="header" class="header d-flex align-items-center sticky-top">
         <div class="container-fluid container-xl position-relative d-flex align-items-center">
 
-            <a href="/" class="logo d-flex align-items-center me-auto">
+            <a href="#" id="eventku-logo" class="logo d-flex align-items-center me-auto">
                 <!-- Uncomment the line below if you also wish to use an image logo -->
                 <!-- <img src="assets/img/logo.png" alt=""> -->
                 <h1 class="sitename">EventKu</h1>
@@ -41,38 +41,25 @@
 
             <nav id="navmenu" class="navmenu">
                 <ul>
-                    <li><a href="#hero" class="active">Beranda<br></a></li>
-                    {{-- <li><a href="#about">Tentang Kami</a></li> --}}
-                    <li><a href="#services">Event</a></li>
-                    {{-- <li><a href="#portfolio">Portofolio</a></li> --}}
-                    <li><a href="#team">Tim</a></li>
-                    {{-- <li class="dropdown"><a href="#"><span>Dropdown</span> <i
-                                class="bi bi-chevron-down toggle-dropdown"></i></a>
-                        <ul>
-                            <li><a href="#">Dropdown 1</a></li>
-                            <li class="dropdown"><a href="#"><span>Dropdown Mendalam</span> <i
-                                        class="bi bi-chevron-down toggle-dropdown"></i></a>
-                                <ul>
-                                    <li><a href="#">Dropdown Mendalam 1</a></li>
-                                    <li><a href="#">Dropdown Mendalam 2</a></li>
-                                    <li><a href="#">Dropdown Mendalam 3</a></li>
-                                    <li><a href="#">Dropdown Mendalam 4</a></li>
-                                    <li><a href="#">Dropdown Mendalam 5</a></li>
-                                </ul>
-                            </li>
-                            <li><a href="#">Dropdown 2</a></li>
-                            <li><a href="#">Dropdown 3</a></li>
-                            <li><a href="#">Dropdown 4</a></li>
-                        </ul>
+                    <li><a href="/" class="{{ request()->is('/') ? 'active' : '' }}">Beranda<br></a></li>
+                    <li><a href="/#services" class="{{ request()->is('/') ? '' : '' }}">Event</a></li>
+                    <li><a href="/#team" class="{{ request()->is('/') ? '' : '' }}">Tim</a></li>
+                    <li><a href="{{ route('event.saya') }}"
+                            class="{{ request()->is('event-saya') ? 'active' : '' }}">Event Saya</a></li>
+                    <li><a href="{{ route('riwayat.pembayaran') }}"
+                            class="{{ request()->is('riwayat-pembayaran') ? 'active' : '' }}">Riwayat Pembayaran</a>
                     </li>
-                    <li><a href="#contact">Kontak</a></li> --}}
                 </ul>
                 <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
             </nav>
 
+
             <div id="auth-section">
                 <a class="btn-getstarted" href="/login">Daftar / Masuk</a>
             </div>
+
+            <!-- Profile Dropdown Script and Style -->
+            <link href="{{ asset('assets/css/profile-dropdown.css') }}" rel="stylesheet">
 
         </div>
     </header>
@@ -127,45 +114,104 @@
     <!-- Main JS File -->
     <script src="{{ asset('assets/js/main.js') }}"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
+        document.addEventListener("DOMContentLoaded", function() {
+            const eventkuLogo = document.getElementById("eventku-logo");
+            // Helper: get role from JWT
+            function getRoleFromToken(token) {
+                if (!token) return null;
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+                    return payload.role || payload.roles_idroles || null;
+                } catch (e) {
+                    return null;
+                }
+            }
+
+            // Logo EventKu click logic
+            if (eventkuLogo) {
+                eventkuLogo.addEventListener("click", function(e) {
+                    e.preventDefault();
+                    let role = getRoleFromToken(token);
+                    if (role == 3 || role == "3" || role == "keuangan") {
+                        window.location.href = "/keuangan/dashboard";
+                    } else {
+                        window.location.href = "/";
+                    }
+                });
+            }
             const token = localStorage.getItem("token");
-            const loginMessageShown = sessionStorage.getItem("loginMessageShown");
+            const authSection = document.getElementById("auth-section");
+            const tokenBaru = localStorage.getItem("tokenBaru");
+
+            // Helper: get role from JWT
+            function getRoleFromToken(token) {
+                if (!token) return null;
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+                    return payload.role || payload.roles_idroles || null;
+                } catch (e) {
+                    return null;
+                }
+            }
 
             if (token) {
-                document.getElementById("auth-section").innerHTML = `
-            <div class="dropdown">
-                <a class="btn-getstarted dropdown-toggle" href="#" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">Profil</a>
-                <ul class="dropdown-menu" aria-labelledby="profileDropdown">
-                    <li><a class="dropdown-item" href="#" id="logoutBtn">Logout</a></li>
-                </ul>
-            </div>
-        `;
+                let role = getRoleFromToken(token);
+                let profileUrl = "/member/profile";
+                if (role == 3 || role == "3" || role == "keuangan") {
+                    profileUrl = "/keuangan/profile";
+                }
+                authSection.innerHTML = `
+                <div class="profile-dropdown" id="profileDropdown">
+                    <button class="profile-dropdown-toggle" type="button" id="profileDropdownBtn">
+                        <i class="bi bi-person-circle" style="font-size:18px;"></i> Profil
+                    </button>
+                    <div class="profile-dropdown-menu" id="profileDropdownMenu">
+                        <a href="${profileUrl}">Profile</a>
+                        <a href="#" id="logoutBtn">Logout</a>
+                    </div>
+                </div>
+                `;
 
-                if (!loginMessageShown) {
-                    const alertDiv = document.createElement("div");
-                    alertDiv.className = "alert alert-success mt-3";
-                    alertDiv.role = "alert";
-                    alertDiv.style = "position: fixed; top: 70px; right: 20px; z-index: 9999;";
-                    alertDiv.textContent = "Login berhasil, Selamat datang!";
+                // Dropdown toggle logic
+                const dropdown = document.getElementById('profileDropdown');
+                const btn = document.getElementById('profileDropdownBtn');
+                const menu = document.getElementById('profileDropdownMenu');
+                let isOpen = false;
 
-                    document.body.appendChild(alertDiv);
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    isOpen = !isOpen;
+                    dropdown.classList.toggle('open', isOpen);
+                });
+                document.addEventListener('click', function(e) {
+                    if (isOpen && !dropdown.contains(e.target)) {
+                        isOpen = false;
+                        dropdown.classList.remove('open');
+                    }
+                });
 
-                    setTimeout(() => {
-                        alertDiv.remove();
-                    }, 3000);
-
-                    sessionStorage.setItem("loginMessageShown", "true");
+                // Tampilkan notif login hanya jika tokenBaru ada
+                if (tokenBaru) {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'Login berhasil, Selamat datang!',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                    localStorage.removeItem("tokenBaru");
                 }
 
                 // Logout handler
-                document.getElementById("logoutBtn").addEventListener("click", function () {
+                document.getElementById("logoutBtn").addEventListener("click", function() {
                     localStorage.removeItem("token");
-                    sessionStorage.removeItem("loginMessageShown");
+                    localStorage.removeItem("tokenBaru");
                     window.location.href = "/";
                 });
             }
         });
-
     </script>
 
 

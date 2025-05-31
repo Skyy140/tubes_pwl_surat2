@@ -12,8 +12,10 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors()); // aktifkan CORS agar bisa diakses dari frontend
+
+// Serve static for sertif (sertifikat)
+app.use("/sertif", express.static(path.join(__dirname, "public/sertif")));
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
-// Tambahkan static untuk poster
 app.use("/poster", express.static(path.join(__dirname, "public/poster")));
 app.use("/", eventsRouter);
 

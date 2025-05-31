@@ -1226,6 +1226,9 @@ router.get("/api/attendances/users", async (req, res) => {
       return {
         user_name: user?.name || "-",
         user_id: user?.idusers || "-",
+        certificate_path: a.certificate_path || "",
+        registrations_detail_idregistrations_detail:
+          a.registrations_detail_idregistrations_detail,
       };
     });
 
@@ -1235,4 +1238,102 @@ router.get("/api/attendances/users", async (req, res) => {
     res.status(500).json({ message: "Terjadi kesalahan saat memuat data." });
   }
 });
+
+// Upload sertifikat untuk user hadir pada sesi tertentu
+const sertifStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const dest = path.join(__dirname, "../public/sertif");
+    if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
+    cb(null, dest);
+  },
+  filename: function (req, file, cb) {
+    const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, unique + path.extname(file.originalname));
+  },
+});
+const uploadSertif = multer({ storage: sertifStorage });
+
+// POST /api/sertif/upload
+router.post(
+  "/api/sertif/upload",
+  uploadSertif.single("sertif"),
+  async (req, res) => {
+    try {
+      // Dapatkan user_id dan sesi dari body
+      const { user_id, sesi, event_id } = req.body;
+      if (!req.file)
+        return res
+          .status(400)
+          .json({ message: "File sertifikat wajib diupload" });
+      if (!user_id || !sesi || !event_id)
+        return res
+          .status(400)
+          .json({ message: "user_id, sesi, event_id wajib diisi" });
+
+      const sertifPath = `/sertif/${req.file.filename}`;
+
+      // Cari event_detail (sesi) yang sesuai
+      const eventDetail = await EventDetail.findOne({
+        where: { sesi: sesi, events_idevents: event_id },
+      });
+      if (!eventDetail) {
+        return res.status(404).json({ message: "Sesi event tidak ditemukan" });
+      }
+
+      // Cari registrations_detail yang sesuai user dan sesi
+      const regDetail = await RegistrasiDetail.findOne({
+        where: {
+          event_detail_idevent_detail: eventDetail.idevent_detail,
+        },
+        include: [
+          {
+            model: Registrasi,
+            where: { users_idusers: user_id, events_idevents: event_id },
+          },
+        ],
+      });
+      if (!regDetail) {
+        return res
+          .status(404)
+          .json({ message: "Registrasi detail tidak ditemukan" });
+      }
+
+      // Update attendance yang sesuai
+      const attendance = await Attendance.findOne({
+        where: {
+          registrations_detail_idregistrations_detail:
+            regDetail.idregistrations_detail,
+          status: "attend",
+        },
+      });
+      if (!attendance) {
+        return res.status(404).json({ message: "Attendance tidak ditemukan" });
+      }
+
+      // (Opsional) Hapus file lama jika ada
+      if (attendance.certificate_path && attendance.certificate_path !== "") {
+        const oldPath = path.join(
+          __dirname,
+          "../public",
+          attendance.certificate_path
+        );
+        if (fs.existsSync(oldPath)) {
+          try {
+            fs.unlinkSync(oldPath);
+          } catch (e) {
+            /* ignore */
+          }
+        }
+      }
+
+      attendance.certificate_path = sertifPath;
+      await attendance.save();
+
+      res.status(201).json({ message: "Upload berhasil", path: sertifPath });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Gagal upload sertifikat" });
+    }
+  }
+);
 module.exports = router;

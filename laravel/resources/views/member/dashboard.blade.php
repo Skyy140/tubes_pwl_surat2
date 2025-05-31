@@ -84,7 +84,8 @@
                 <div class="d-flex flex-wrap gap-2 justify-content-center">
                     <button class="btn btn-outline-primary btn-sm category-filter" data-id="all">Semua</button>
                     @foreach ($categories as $category)
-                        <button class="btn btn-outline-primary btn-sm category-filter" data-id="{{ $category['idcategory'] }}">
+                        <button class="btn btn-outline-primary btn-sm category-filter"
+                            data-id="{{ $category['idcategory'] }}">
                             {{ $category['name'] }}
                         </button>
                     @endforeach
@@ -102,7 +103,8 @@
                         <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="100">
                             <div class="card shadow-sm h-100 border-0 position-relative overflow-hidden">
                                 <div class="position-relative">
-                                    <img src="{{ asset('assets/img/services-1.jpg') }}" class="card-img-top" alt="Event Image">
+                                    <img src="{{ asset('assets/img/services-1.jpg') }}" class="card-img-top"
+                                        alt="Event Image">
                                     <div class="position-absolute top-0 start-0 m-2 d-flex flex-wrap gap-1">
                                         @if (!empty($event['categories']))
                                             @foreach ($event['categories'] as $category)
@@ -121,12 +123,16 @@
                                     <p class="mb-1"><i class="bi bi-clock"></i> {{ $event['time'] }}</p>
                                     <p class="mb-1"><i class="bi bi-geo-alt"></i>
                                         {{ $event['location'] ?? 'Lokasi belum ditentukan' }}</p>
-                                    <p class="mb-1"><i class="bi bi-cash-stack"></i> Biaya: {{ $event['registration_fee'] }}</p>
-                                    <p class="mb-1"><i class="bi bi-people"></i> Peserta: {{ $event['max_participants'] }}</p>
+                                    <p class="mb-1"><i class="bi bi-cash-stack"></i> Biaya:
+                                        {{ $event['registration_fee'] }}</p>
+                                    <p class="mb-1"><i class="bi bi-people"></i> Peserta:
+                                        {{ $event['max_participants'] }}</p>
                                     @if (!empty($event['details']))
                                         <p class="mb-3"><i class="bi bi-person"></i> Sesi:
                                             @foreach ($event['details'] as $detail)
-                                                {{ $detail['sesi'] }}@if (!$loop->last), @endif
+                                                {{ $detail['sesi'] }}@if (!$loop->last)
+                                                    ,
+                                                @endif
                                             @endforeach
                                         </p>
                                     @else
@@ -136,7 +142,9 @@
                                         <p class="mb-3"><i class="bi bi-person"></i> Pembicara:
                                             @foreach ($event['details'] as $detail)
                                                 @foreach ($detail['speakers'] as $speaker)
-                                                    {{ $speaker['name'] }}@if (!$loop->last), @endif
+                                                    {{ $speaker['name'] }}@if (!$loop->last)
+                                                        ,
+                                                    @endif
                                                 @endforeach
                                             @endforeach
                                         </p>
@@ -155,8 +163,6 @@
                             </div>
                         </div>
                     @endforeach
-                    <li><a href="{{ route('event.saya') }}">Event Saya</a></li>
-                    <li><a href="{{ route('riwayat.pembayaran') }}">Riwayat Pembayaran</a></li>
                 </div>
             </div>
             {{-- <a href="{{ route('riwayat-event', ['user_id' => auth()->user()->id ?? 1]) }}" class="btn btn-primary"
@@ -264,7 +270,7 @@
 
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             const buttons = document.querySelectorAll('.category-filter');
             const eventList = document.getElementById('event-list');
             const paginationContainer = document.getElementById('pagination-container');
@@ -324,7 +330,7 @@
             }
 
             buttons.forEach(button => {
-                button.addEventListener('click', function () {
+                button.addEventListener('click', function() {
                     const categoryId = this.dataset.id;
                     let url = 'http://localhost:3000/api/events';
 
@@ -338,7 +344,8 @@
                             eventList.innerHTML = '';
 
                             if (events.length === 0) {
-                                eventList.innerHTML = '<p class="text-muted">Tidak ada event untuk kategori ini.</p>';
+                                eventList.innerHTML =
+                                    '<p class="text-muted">Tidak ada event untuk kategori ini.</p>';
                                 paginationContainer.style.display = 'none';
                                 return;
                             }
@@ -347,10 +354,12 @@
                                 let categoryBadges = '';
                                 if (event.categories && event.categories.length > 0) {
                                     event.categories.forEach(cat => {
-                                        categoryBadges += `<span class="badge bg-primary me-1">${cat.name}</span>`;
+                                        categoryBadges +=
+                                            `<span class="badge bg-primary me-1">${cat.name}</span>`;
                                     });
                                 } else {
-                                    categoryBadges = '<span class="badge bg-secondary">Tidak ada kategori</span>';
+                                    categoryBadges =
+                                        '<span class="badge bg-secondary">Tidak ada kategori</span>';
                                 }
 
                                 const div = document.createElement('div');
@@ -388,7 +397,7 @@
                             const token = localStorage.getItem("token");
                             if (!token) {
                                 document.querySelectorAll(".daftar-btn").forEach(btn => {
-                                    btn.addEventListener("click", function (e) {
+                                    btn.addEventListener("click", function(e) {
                                         e.preventDefault();
 
                                         Swal.fire({
@@ -419,12 +428,12 @@
             setupPagination();
         });
 
-        document.addEventListener("DOMContentLoaded", function () {
+        document.addEventListener("DOMContentLoaded", function() {
             const token = localStorage.getItem("token");
 
             if (!token) {
                 document.querySelectorAll(".daftar-btn").forEach(btn => {
-                    btn.addEventListener("click", function (e) {
+                    btn.addEventListener("click", function(e) {
                         e.preventDefault();
 
                         Swal.fire({
@@ -442,7 +451,6 @@
                 });
             }
         });
-
     </script>
 
 @endsection

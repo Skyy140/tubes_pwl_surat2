@@ -135,3 +135,37 @@ Route::get('/keuangan/event/event-detail/{id}', function () {
 Route::get('/panit/sertif', function () {
     return view('panit.sertif');
 })->name('panit.sertif');
+
+// Profile page route (member)
+Route::get('/member/profile', function () {
+    $userId = session('user_id');
+    $user = [
+        'name' => '',
+        'email' => '',
+        'status' => '',
+    ];
+    if ($userId) {
+        $response = Http::get('http://localhost:3000/api/users/profile/' . $userId);
+        if ($response->successful()) {
+            $user = $response->json();
+        }
+    }
+    return view('member.profile', compact('user'));
+})->name('member.profile');
+
+// Profile page route (keuangan)
+Route::get('/keuangan/profile', function () {
+    $userId = session('user_id');
+    $user = [
+        'name' => '',
+        'email' => '',
+        'status' => '',
+    ];
+    if ($userId) {
+        $response = Http::get('http://localhost:3000/api/users/profile/' . $userId);
+        if ($response->successful()) {
+            $user = $response->json();
+        }
+    }
+    return view('keuangan.profile', compact('user'));
+})->name('keuangan.profile');

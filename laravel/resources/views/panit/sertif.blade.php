@@ -113,22 +113,118 @@
                         .then(users => {
                             let html = '';
                             if (users && users.length > 0) {
+                                let hasUser = false;
                                 html +=
                                     `<table class="table table-bordered"><thead><tr><th>Nama User</th><th class='text-center'>Action</th></tr></thead><tbody>`;
                                 users.forEach(user => {
-                                    html +=
-                                        `<tr>
-                                            <td>${user.user_name}</td>
-                                            <td class='text-center'><a href="#" class="btn btn-primary btn-sm upload-sertif-btn">Upload</a></td>
+                                    if (!user.user_name || user.user_name === '-')
+                                        return; // skip if no name
+                                    hasUser = true;
+                                    let sertifHtml = '';
+                                    if (user.certificate_path && user.certificate_path !== '') {
+                                        const url = 'http://localhost:3000' + user
+                                            .certificate_path;
+                                        if (/\.(jpg|jpeg|png|gif)$/i.test(user
+                                                .certificate_path)) {
+                                            sertifHtml =
+                                                `<div class="d-flex justify-content-center"><a href="${url}" target="_blank"><img src="${url}" alt="Sertifikat" style="max-width:80px;max-height:80px;border:1px solid #ccc;margin-bottom:4px;cursor:pointer;"></a></div>`;
+                                        } else if (/\.pdf$/i.test(user.certificate_path)) {
+                                            sertifHtml =
+                                                `<div class="d-flex justify-content-center"><a href="${url}" target="_blank" class="btn btn-info btn-sm mb-1">Lihat Sertif (PDF)</a></div>`;
+                                        }
+                                    } else {
+                                        sertifHtml =
+                                            `<span class="text-muted">Belum ada sertifikat</span>`;
+                                    }
+                                    html += `<tr>
+                                            <td class='align-middle'>${user.user_name}</td>
+                                            <td class='text-center align-middle'>
+                                                ${sertifHtml}
+                                                <form class="upload-sertif-form mt-2" enctype="multipart/form-data" style="display:inline-block">
+                                                    <input type="file" name="sertif" accept=".pdf,image/*" style="display:none" required />
+                                                    <input type="hidden" name="user_id" value="${user.user_id}" />
+                                                    <input type="hidden" name="sesi" value="${sesiName}" />
+                                                    <input type="hidden" name="event_id" value="${eventId}" />
+                                                    <button type="button" class="btn btn-primary btn-sm btn-upload-trigger">Upload</button>
+                                                    <button type="submit" class="btn btn-success btn-sm" style="display:none">Kirim</button>
+                                                </form>
+                                            </td>
                                         </tr>`;
                                 });
                                 html += `</tbody></table>`;
+                                if (!hasUser) {
+                                    html =
+                                        '<div class="alert alert-info">Belum ada peserta yang hadir.</div>';
+                                }
                             } else {
                                 html =
-                                    '<div class="alert alert-info">Tidak ada user yang hadir pada sesi ini.</div>';
+                                    '<div class="alert alert-info">Belum ada peserta yang hadir.</div>';
                             }
                             document.getElementById('modal-user-attend-body').innerHTML = html;
                             $('#modalUserAttend').modal('show');
+
+                            // Event: klik tombol upload, trigger input file
+                            document.querySelectorAll('.btn-upload-trigger').forEach(btn => {
+                                btn.onclick = function() {
+                                    const form = btn.closest('form');
+                                    const fileInput = form.querySelector(
+                                        'input[type="file"]');
+                                    fileInput.click();
+                                };
+                            });
+                            // Event: input file change, show submit
+                            document.querySelectorAll('.upload-sertif-form input[type="file"]').forEach(
+                                input => {
+                                    input.onchange = function() {
+                                        const form = input.closest('form');
+                                        form.querySelector('button[type="submit"]').style
+                                            .display = '';
+                                    };
+                                });
+                            // Event: submit upload form
+                            document.querySelectorAll('.upload-sertif-form').forEach(form => {
+                                form.onsubmit = async function(e) {
+                                    e.preventDefault();
+                                    const fileInput = form.querySelector(
+                                        'input[type="file"]');
+                                    if (!fileInput.files[0]) return alert(
+                                        'Pilih file sertifikat!');
+                                    const formData = new FormData(form);
+                                    try {
+                                        const res = await fetch(
+                                            'http://localhost:3000/api/sertif/upload', {
+                                                method: 'POST',
+                                                body: formData
+                                            });
+                                        const data = await res.json();
+                                        if (res.ok) {
+                                            Swal.fire({
+                                                icon: 'success',
+                                                title: 'Upload Berhasil',
+                                                text: 'Sertifikat berhasil diupload!',
+                                                timer: 1800,
+                                                showConfirmButton: false
+                                            });
+                                            form.querySelector('button[type="submit"]')
+                                                .style.display = 'none';
+                                            fileInput.value = '';
+                                        } else {
+                                            Swal.fire({
+                                                icon: 'error',
+                                                title: 'Upload Gagal',
+                                                text: data.message ||
+                                                    'Upload gagal!'
+                                            });
+                                        }
+                                    } catch (err) {
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Upload Gagal',
+                                            text: 'Upload gagal!'
+                                        });
+                                    }
+                                };
+                            });
                         })
                         .catch(() => {
                             document.getElementById('modal-user-attend-body').innerHTML =
