@@ -1030,20 +1030,41 @@ router.post("/registrasi/:id/approve", async (req, res) => {
       { where: { idregistrations: id } }
     );
 
+    // Ambil registrations_detail yang sudah ada untuk registrasi ini (sesi yang dipilih user)
+    const regDetails = await RegistrasiDetail.findAll({
+      where: { registrations_idregistrations: id },
+    });
+
+    let sesi = [];
+    let idregistrations_detail_arr = [];
+    for (const regDetail of regDetails) {
+      sesi.push({
+        idregistrations_detail: regDetail.idregistrations_detail,
+        event_detail_idevent_detail: regDetail.event_detail_idevent_detail,
+      });
+      idregistrations_detail_arr.push(regDetail.idregistrations_detail);
+      // Insert ke attendances jika belum ada
+      let attendance = await Attendance.findOne({
+        where: {
+          registrations_detail_idregistrations_detail:
+            regDetail.idregistrations_detail,
+        },
+      });
+      if (!attendance) {
+        await Attendance.create({
+          status: "nattend",
+          registrations_detail_idregistrations_detail:
+            regDetail.idregistrations_detail,
+        });
+      }
+    }
+
+    // QR code hanya berisi id penting agar sederhana
     const qrData = {
-      user: {
-        id: registrasi.user.id,
-        name: registrasi.user.name,
-        email: registrasi.user.email,
-      },
-      event: {
-        id: registrasi.events.idevents,
-        name: registrasi.events.name,
-      },
-      registrasi: {
-        id: registrasi.idregistrations,
-        status: "selesai",
-      },
+      registrasi_id: registrasi.idregistrations,
+      user_id: registrasi.user.idusers,
+      event_id: registrasi.events.idevents,
+      idregistrations_detail: idregistrations_detail_arr,
     };
     const qrCodeBuffer = await QRCode.toBuffer(JSON.stringify(qrData));
     const UserName = registrasi.user.name
@@ -1115,6 +1136,7 @@ router.post("/registrasi/:id/approve", async (req, res) => {
       message: "Pembayaran berhasil disetujui",
       qrCodePath: qrDbPath,
       pdfBuktiPath: pdfDbPath,
+      sesi,
     });
   } catch (error) {
     console.error(error);
@@ -1298,8 +1320,12 @@ router.post(
           .json({ message: "Registrasi detail tidak ditemukan" });
       }
 
-      // Update attendance yang sesuai
-      const attendance = await Attendance.findOne({
+      console.log(
+        "regDetail.idregistrations_detail",
+        regDetail.idregistrations_detail
+      );
+      // Cari attendance dengan status attend
+      let attendance = await Attendance.findOne({
         where: {
           registrations_detail_idregistrations_detail:
             regDetail.idregistrations_detail,
@@ -1308,6 +1334,11 @@ router.post(
       });
       if (!attendance) {
         return res.status(404).json({ message: "Attendance tidak ditemukan" });
+      }
+      if (attendance.status !== "attend") {
+        return res
+          .status(400)
+          .json({ message: "User belum absen (status attend)" });
       }
 
       // (Opsional) Hapus file lama jika ada

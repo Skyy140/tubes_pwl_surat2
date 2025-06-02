@@ -77,49 +77,95 @@
         function onScanSuccess(decodedText, decodedResult) {
             try {
                 const data = JSON.parse(decodedText);
-
+                // Struktur baru: { registrasi_id, user_id, event_id, idregistrations_detail }
                 const html = `
                 <div class="alert alert-success">
                     <strong>QR Terdeteksi!</strong><br><br>
-                    <b>User:</b><br>
-                    - Nama: ${data.user.name}<br>
-                    - Email: ${data.user.email}<br><br>
-
-                    <b>Event:</b><br>
-                    - ID: ${data.event.id}<br>
-                    - Nama: ${data.event.name}<br><br>
-
-                    <b>Registrasi:</b><br>
-                    - ID Registrasi: ${data.registrasi.id}<br>
-                    - Status: ${data.registrasi.status}
+                    <b>Registrasi ID:</b> ${data.registrasi_id}<br>
+                    <b>User ID:</b> ${data.user_id}<br>
+                    <b>Event ID:</b> ${data.event_id}<br>
+                    <b>ID Registrations Detail:</b> ${(Array.isArray(data.idregistrations_detail) ? data.idregistrations_detail.join(', ') : '-')}
                 </div>
             `;
                 document.getElementById('qr-result').innerHTML = html;
                 document.getElementById('qr-error').innerText = '';
+
+                // Kirim request update attendance untuk setiap idregistrations_detail
+                if (Array.isArray(data.idregistrations_detail)) {
+                    let successCount = 0;
+                    let failCount = 0;
+                    let failMsg = '';
+                    Promise.all(data.idregistrations_detail.map(id => {
+                        return fetch('http://localhost:3000/api/attendances/update-status', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    idregistrations_detail: id
+                                })
+                            })
+                            .then(res => res.json())
+                            .then(result => {
+                                if (result.message && result.message.includes('berhasil')) {
+                                    successCount++;
+                                } else {
+                                    failCount++;
+                                    failMsg = result.message || 'Gagal update attendance';
+                                }
+                            })
+                            .catch(() => {
+                                failCount++;
+                                failMsg = 'Gagal update attendance';
+                            });
+                    })).then(() => {
+                        if (successCount > 0 && failCount === 0) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil',
+                                text: 'Status attendance berhasil diupdate!'
+                            });
+                        } else if (successCount > 0 && failCount > 0) {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Sebagian Berhasil',
+                                text: `Sebagian attendance berhasil diupdate. Gagal: ${failMsg}`
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal',
+                                text: failMsg || 'Gagal update attendance.'
+                            });
+                        }
+                    });
+                }
             } catch (e) {
                 document.getElementById('qr-result').innerHTML = '';
                 document.getElementById('qr-error').innerText = "QR tidak valid atau format salah.";
             }
+            // --- END onScanSuccess ---
         }
 
         function onScanError(errorMessage) {
             document.getElementById('qr-error').innerText = errorMessage;
         }
-        document.addEventListener('DOMContentLoaded', function () {
+
+        document.addEventListener('DOMContentLoaded', function() {
             if (document.getElementById('qr-reader')) {
                 if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                     navigator.mediaDevices.getUserMedia({
-                        video: true
-                    })
-                        .then(function (stream) {
+                            video: true
+                        })
+                        .then(function(stream) {
                             stream.getTracks().forEach(track => track.stop());
                             const html5QrCode = new Html5Qrcode("qr-reader");
                             html5QrCode.start({
-                                facingMode: "environment"
-                            }, {
-                                fps: 10,
-                                qrbox: 250
-                            },
+                                    facingMode: "environment"
+                                }, {
+                                    fps: 10,
+                                    qrbox: 250
+                                },
                                 onScanSuccess,
                                 onScanError
                             ).catch(err => {
@@ -127,7 +173,7 @@
                                     'Gagal mengakses kamera: ' + err;
                             });
                         })
-                        .catch(function (err) {
+                        .catch(function(err) {
                             document.getElementById('qr-error').innerText =
                                 'Izin kamera ditolak atau tidak tersedia.';
                         });
@@ -137,6 +183,7 @@
             }
         });
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
 
 </html>

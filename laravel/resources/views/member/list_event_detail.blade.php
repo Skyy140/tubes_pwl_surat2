@@ -21,17 +21,17 @@
 
                 document.getElementById('eventTitle').innerText = data.name;
 
-                const qrCodePath = data.registrasi?.[0]?.qr_code
-                    ? `http://localhost:3000${data.registrasi[0].qr_code}`
-                    : '';
+                const qrCodePath = data.registrasi?.[0]?.qr_code ?
+                    `http://localhost:3000${data.registrasi.qr_code}` :
+                    '';
 
                 let html = `
                     <p><strong>Deskripsi:</strong> ${data.description || '-'}</p>
                     <p><strong>Tanggal:</strong> ${data.date_start || '-'} - ${data.date_end || '-'}</p>
                     <p><strong>Lokasi:</strong> ${data.location || '-'}</p>
                     ${qrCodePath ? `
-                    <p>QR KAMU</p>
-                    <img src="${qrCodePath}" alt="QR Code" style="max-width: 200px;">` : '<p><em></em></p>'}
+                            <p>QR KAMU</p>
+                            <img src="${qrCodePath}" alt="QR Code" style="max-width: 200px;">` : '<p><em></em></p>'}
                     <h4 class="mt-4">Sesi</h4>
                     <table class="table table-bordered">
                         <thead>
@@ -39,20 +39,21 @@
                         </thead>
                         <tbody>
                             ${(data.details || []).map((sesi, i) => `
-                                <tr>
-                                    <td>${i + 1}</td>
-                                    <td>${sesi.sesi}</td>
-                                    <td>${sesi.date}</td>
-                                    <td>${sesi.time_start} - ${sesi.time_end}</td>
-                                </tr>
-                            `).join('')}
+                                        <tr>
+                                            <td>${i + 1}</td>
+                                            <td>${sesi.sesi}</td>
+                                            <td>${sesi.date}</td>
+                                            <td>${sesi.time_start} - ${sesi.time_end}</td>
+                                        </tr>
+                                    `).join('')}
                         </tbody>
                     </table>
                 `;
 
                 document.getElementById('eventDetail').innerHTML = html;
             } catch (err) {
-                document.getElementById('eventDetail').innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
+                document.getElementById('eventDetail').innerHTML =
+                    `<div class="alert alert-danger">${err.message}</div>`;
             }
         }
 

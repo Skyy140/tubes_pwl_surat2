@@ -30,6 +30,10 @@ app.use("/api/events", eventsRouter);
 app.use("/api/auth", authRouter); // route login
 app.use("/api/users", userRouter); // route user keuangan
 
+// Attendance route
+const attendanceRouter = require("./routes/attendance");
+app.use("/api/attendances", attendanceRouter);
+
 // Test DB Connection & Sync
 sequelize
   .authenticate()
