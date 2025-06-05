@@ -281,7 +281,9 @@
                         icon: 'success',
                         title: 'Berhasil!',
                         text: 'Registrasi berhasil!',
-                    });
+                    }) .then(() => {
+                        window.location.href = '/';  
+                });
                 } else {
                     Swal.fire({
                         icon: 'error',

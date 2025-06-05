@@ -885,7 +885,11 @@ router.get("/events/:id", async (req, res) => {
 });
 // end ambil buat detail
 // buat munculin qr, klo mau pdf ga perlu, pakai atas aja
+
+
 router.get("/event-detail-with-qr/:id", async (req, res) => {
+  const userId = req.query.userId;
+
   try {
     const event = await Event.findByPk(req.params.id, {
       attributes: [
@@ -904,7 +908,9 @@ router.get("/event-detail-with-qr/:id", async (req, res) => {
         {
           model: Registrasi,
           as: "registrasi",
+          where: { users_idusers: userId },
           attributes: ["qr_code"],
+          required: false,
         },
       ],
     });
@@ -913,94 +919,18 @@ router.get("/event-detail-with-qr/:id", async (req, res) => {
       return res.status(404).json({ message: "Event tidak ditemukan" });
     }
 
-    res.json(event);
+    const result = {
+      ...event.toJSON(),
+      registrasi: event.registrasi?.[0] || null,
+    };
+
+    res.json(result);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Gagal mengambil data event" });
   }
 });
 
-// approve reject
-// router.post("/registrasi/:id/approve", async (req, res) => {
-//   try {
-//     const id = req.params.id;
-
-//     const payment = await Payment.findOne({
-//       where: { registrations_idregistrations: id },
-//     });
-//     if (!payment)
-//       return res
-//         .status(404)
-//         .json({ message: "Data pembayaran tidak ditemukan" });
-
-//     const registrasi = await Registrasi.findOne({
-//       where: { idregistrations: id },
-//       include: [{ model: User }, { model: Event, as: "events" }],
-//     });
-
-//     if (!registrasi)
-//       return res
-//         .status(404)
-//         .json({ message: "Data registrasi tidak ditemukan" });
-
-//     await payment.update({ status: "disetujui", note: req.body.note || "" });
-//     await Registrasi.update(
-//       { status: "selesai" },
-//       { where: { idregistrations: id } }
-//     );
-
-//     const qrData = {
-//       user: {
-//         id: registrasi.user.id,
-//         name: registrasi.user.name,
-//         email: registrasi.user.email,
-//       },
-//       event: {
-//         id: registrasi.events.idevents,
-//         name: registrasi.events.name,
-//       },
-//       registrasi: {
-//         id: registrasi.idregistrations,
-//         status: "selesai",
-//       },
-//     };
-
-//     const qrCodeBuffer = await QRCode.toBuffer(JSON.stringify(qrData));
-
-//     const UserName = registrasi.user.name
-//       .replace(/[^a-z0-9]/gi, "_")
-//       .toLowerCase();
-//     const EventName = registrasi.events.name
-//       .replace(/[^a-z0-9]/gi, "_")
-//       .toLowerCase();
-//     const fileName = `${UserName}-${EventName}-${id}.png`;
-//     const qrDir = path.join(__dirname, "../public/uploads/qr");
-
-//     if (!fs.existsSync(qrDir)) {
-//       fs.mkdirSync(qrDir, { recursive: true });
-//     }
-
-//     const filePath = path.join(qrDir, fileName);
-
-//     fs.writeFileSync(filePath, qrCodeBuffer);
-
-//     const dbPath = `/uploads/qr/${fileName}`;
-//     await Registrasi.update(
-//       { qr_code: dbPath },
-//       { where: { idregistrations: id } }
-//     );
-
-//     res.json({
-//       message: "Pembayaran telah berhasil disetujui",
-//       qrCodePath: dbPath,
-//     });
-//   } catch (error) {
-//     console.error(error);
-//     res
-//       .status(500)
-//       .json({ message: "Terjadi kesalahan saat menyetujui pembayaran" });
-//   }
-// });
 const PDFDocument = require("pdfkit");
 
 router.post("/registrasi/:id/approve", async (req, res) => {

@@ -44,9 +44,9 @@
                     <li><a href="/" class="{{ request()->is('/') ? 'active' : '' }}">Beranda<br></a></li>
                     <li><a href="/#services" class="{{ request()->is('/') ? '' : '' }}">Event</a></li>
                     <li><a href="/#team" class="{{ request()->is('/') ? '' : '' }}">Tim</a></li>
-                    <li><a href="{{ route('event.saya') }}"
+                    <li id="eventSayaMenu"><a href="{{ route('event.saya') }}"
                             class="{{ request()->is('event-saya') ? 'active' : '' }}">Event Saya</a></li>
-                    <li><a href="{{ route('riwayat.pembayaran') }}"
+                    <li id="riwayatPembayaranMenu"><a href="{{ route('riwayat.pembayaran') }}"
                             class="{{ request()->is('riwayat-pembayaran') ? 'active' : '' }}">Riwayat Pembayaran</a>
                     </li>
                 </ul>
@@ -153,7 +153,13 @@
                     return null;
                 }
             }
-
+            const eventSayaMenu = document.getElementById('eventSayaMenu');
+            const riwayatPembayaranMenu = document.getElementById('riwayatPembayaranMenu');
+            let role = getRoleFromToken(token);
+            if (role != "member") {
+                if (eventSayaMenu) eventSayaMenu.style.display = 'none';
+                if (riwayatPembayaranMenu) riwayatPembayaranMenu.style.display = 'none';
+            }
             if (token) {
                 let role = getRoleFromToken(token);
                 let profileUrl = "/member/profile";
