@@ -52,7 +52,7 @@
                     </div>
                     <div class="form-group">
                         <label for="coordinator">ID Koordinator</label>
-                        <input type="number" class="form-control" id="coordinator" name="coordinator" required>
+                        <input type="number" class="form-control" id="coordinator" name="coordinator" readonly required>
                     </div>
                     <div class="form-group">
                         <label>Kategori Event</label>
@@ -78,7 +78,23 @@
 @endsection
 
 @section('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
     <script>
+        // Set coordinator field to logged-in user id (from JWT)
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('token');
+            if (token) {
+                try {
+                    const decoded = window.jwt_decode(token);
+                    if (decoded && decoded.id) {
+                        document.getElementById('coordinator').value = decoded.id;
+                    }
+                } catch (e) {
+                    // Token invalid, do nothing
+                }
+            }
+        });
+
         // Fetch categories for dropdown
         async function loadCategories() {
             const res = await fetch('http://localhost:3000/api/events/categories/all');
@@ -327,9 +343,13 @@
             });
             formData.append('details', JSON.stringify(details));
             try {
+                const token = localStorage.getItem('token');
                 const response = await fetch('http://localhost:3000/api/events/admin/tambah-event', {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    headers: token ? {
+                        'Authorization': `Bearer ${token}`
+                    } : undefined
                 });
                 const result = await response.json();
                 if (response.ok) {

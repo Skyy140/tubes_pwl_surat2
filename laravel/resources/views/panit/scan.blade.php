@@ -74,6 +74,57 @@
     <script src="{{ asset('assetsAdmin/vendor/datatables/dataTables.bootstrap4.min.js') }}"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script>
+        // Modal HTML for session selection
+        function showSessionModal(sessions, onConfirm) {
+            // Remove existing modal if any
+            const oldModal = document.getElementById('sessionSelectModal');
+            if (oldModal) oldModal.remove();
+            let html = `<div class="modal fade" id="sessionSelectModal" tabindex="-1" role="dialog" aria-labelledby="sessionSelectModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="sessionSelectModalLabel">Pilih Sesi untuk Absen</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="sessionSelectForm">
+                                <div class="form-group">
+                                    <label>Pilih sesi yang ingin diupdate ke hadir:</label>`;
+            sessions.forEach((sesi, idx) => {
+                html += `<div class="form-check">
+                    <input class="form-check-input sesi-checkbox" type="checkbox" name="sesi" value="${sesi.idregistrations_detail}" id="sesi_${idx}">
+                    <label class="form-check-label" for="sesi_${idx}">
+                        ${sesi.sesi} <span class='text-muted small'>(${sesi.date || ''} ${sesi.time_start || ''}-${sesi.time_end || ''})</span>
+                    </label>
+                </div>`;
+            });
+            html += `</div>
+                                <button type="submit" class="btn btn-primary mt-3">Update Absen</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+            document.body.insertAdjacentHTML('beforeend', html);
+            $('#sessionSelectModal').modal('show');
+            document.getElementById('sessionSelectForm').onsubmit = function(e) {
+                e.preventDefault();
+                const checked = [...document.querySelectorAll('.sesi-checkbox:checked')].map(cb => cb.value);
+                if (checked.length === 0) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Pilih Sesi',
+                        text: 'Pilih setidaknya satu sesi.'
+                    });
+                    return;
+                }
+                $('#sessionSelectModal').modal('hide');
+                onConfirm(checked);
+            };
+        }
+
         function onScanSuccess(decodedText, decodedResult) {
             try {
                 const data = JSON.parse(decodedText);
@@ -84,62 +135,179 @@
                     <b>Registrasi ID:</b> ${data.registrasi_id}<br>
                     <b>User ID:</b> ${data.user_id}<br>
                     <b>Event ID:</b> ${data.event_id}<br>
-                    <b>ID Registrations Detail:</b> ${(Array.isArray(data.idregistrations_detail) ? data.idregistrations_detail.join(', ') : '-')}
                 </div>
             `;
                 document.getElementById('qr-result').innerHTML = html;
                 document.getElementById('qr-error').innerText = '';
 
-                // Kirim request update attendance untuk setiap idregistrations_detail
-                if (Array.isArray(data.idregistrations_detail)) {
-                    let successCount = 0;
-                    let failCount = 0;
-                    let failMsg = '';
-                    Promise.all(data.idregistrations_detail.map(id => {
-                        return fetch('http://localhost:3000/api/attendances/update-status', {
+                // Ambil user id login dari JWT
+                const token = localStorage.getItem('token');
+                let userIdLogin = null;
+                if (token) {
+                    try {
+                        userIdLogin = window.jwt_decode(token).id;
+                    } catch (e) {}
+                }
+                if (!userIdLogin) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal',
+                        text: 'User login tidak valid. Silakan login ulang.'
+                    });
+                    return;
+                }
+
+                // Fetch sessions for this registration, with Authorization header
+                fetch(`http://localhost:3000/api/registrasi/${data.registrasi_id}/sessions`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    })
+                    .then(async res => {
+                        if (res.status === 403) {
+                            const err = await res.json();
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal',
+                                text: err.message || 'Silahkan cari panitia yang membuat event ini.'
+                            });
+                            return null;
+                        }
+                        if (!res.ok) {
+                            const err = await res.json();
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal',
+                                text: err.message || 'Gagal mengambil data sesi.'
+                            });
+                            return null;
+                        }
+                        return res.json();
+                    })
+                    .then(async sessions => {
+                        if (!sessions) return;
+                        if (!Array.isArray(sessions) || sessions.length === 0) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Tidak Ada Sesi',
+                                text: 'Tidak ada sesi untuk registrasi ini.'
+                            });
+                            return;
+                        }
+
+                        // Cek status attend untuk semua sesi user ini
+                        const idList = sessions.map(s => s.idregistrations_detail);
+                        // Cek status attend untuk setiap sesi (panggil endpoint attendance per sesi)
+                        // Jika SEMUA sesi sudah attend, tampilkan pesan dan return
+                        // Jika ADA salah satu yang belum attend, hanya tampilkan modal untuk yang belum attend
+                        const attendChecks = await Promise.all(idList.map(id =>
+                            fetch('http://localhost:3000/api/attendances/update-status', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json'
                                 },
                                 body: JSON.stringify({
-                                    idregistrations_detail: id
+                                    idregistrations_detail: id,
+                                    user_id: userIdLogin,
+                                    check_only: true
                                 })
                             })
                             .then(res => res.json())
-                            .then(result => {
-                                if (result.message && result.message.includes('berhasil')) {
-                                    successCount++;
-                                } else {
-                                    failCount++;
-                                    failMsg = result.message || 'Gagal update attendance';
-                                }
-                            })
-                            .catch(() => {
-                                failCount++;
-                                failMsg = 'Gagal update attendance';
-                            });
-                    })).then(() => {
-                        if (successCount > 0 && failCount === 0) {
+                            .then(result => ({
+                                id,
+                                status: result.status,
+                                message: result.message
+                            }))
+                            .catch(() => ({
+                                id,
+                                status: 'error',
+                                message: 'Gagal cek attendance'
+                            }))
+                        ));
+                        // Filter sesi yang BELUM attend
+                        const belumAttend = attendChecks.filter(a => a.status !== 'attend').map(a => a.id);
+                        if (belumAttend.length === 0) {
                             Swal.fire({
-                                icon: 'success',
-                                title: 'Berhasil',
-                                text: 'Status attendance berhasil diupdate!'
+                                icon: 'info',
+                                title: 'Sudah Hadir',
+                                text: 'User sudah hadir di semua sesi yang didaftarkan.'
                             });
-                        } else if (successCount > 0 && failCount > 0) {
-                            Swal.fire({
-                                icon: 'warning',
-                                title: 'Sebagian Berhasil',
-                                text: `Sebagian attendance berhasil diupdate. Gagal: ${failMsg}`
-                            });
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Gagal',
-                                text: failMsg || 'Gagal update attendance.'
-                            });
+                            return;
                         }
+                        // Filter sessions yang belum attend saja
+                        const sessionsBelumAttend = sessions.filter(s => belumAttend.includes(s
+                            .idregistrations_detail));
+                        showSessionModal(sessionsBelumAttend, function(selectedIds) {
+                            // Update attendance for selected sessions only
+                            let successCount = 0;
+                            let failCount = 0;
+                            let failMsg = '';
+                            Promise.all(selectedIds.map(id => {
+                                return fetch(
+                                        'http://localhost:3000/api/attendances/update-status', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json'
+                                            },
+                                            body: JSON.stringify({
+                                                idregistrations_detail: id,
+                                                user_id: userIdLogin
+                                            })
+                                        })
+                                    .then(res => res.json())
+                                    .then(result => {
+                                        if (result.message && result.message.includes(
+                                                'berhasil')) {
+                                            successCount++;
+                                        } else {
+                                            failCount++;
+                                            failMsg = result.message ||
+                                                'Gagal update attendance';
+                                        }
+                                    })
+                                    .catch(() => {
+                                        failCount++;
+                                        failMsg = 'Gagal update attendance';
+                                    });
+                            })).then(() => {
+                                if (successCount > 0 && failCount === 0) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Berhasil',
+                                        text: 'Status attendance berhasil diupdate!'
+                                    });
+                                } else if (successCount > 0 && failCount > 0) {
+                                    Swal.fire({
+                                        icon: 'warning',
+                                        title: 'Sebagian Berhasil',
+                                        text: `Sebagian attendance berhasil diupdate. Gagal: ${failMsg}`
+                                    });
+                                } else {
+                                    if (failMsg && failMsg.includes(
+                                            'Silahkan cari panitia yang membuat event ini')) {
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Gagal',
+                                            text: 'Silahkan cari panitia yang membuat event ini.'
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Gagal',
+                                            text: failMsg || 'Gagal update attendance.'
+                                        });
+                                    }
+                                }
+                            });
+                        });
+                    })
+                    .catch(() => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal',
+                            text: 'Gagal mengambil data sesi.'
+                        });
                     });
-                }
             } catch (e) {
                 document.getElementById('qr-result').innerHTML = '';
                 document.getElementById('qr-error').innerText = "QR tidak valid atau format salah.";
@@ -183,6 +351,7 @@
             }
         });
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
 

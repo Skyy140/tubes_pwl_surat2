@@ -236,8 +236,16 @@ router.post(
         registration_fee,
         max_participants,
         description,
-        coordinator,
       } = req.body;
+      // Ambil id user dari JWT jika ada Authorization header
+      let coordinator = req.body.coordinator;
+      if (!coordinator && req.headers.authorization) {
+        try {
+          const token = req.headers.authorization.replace("Bearer ", "");
+          const decoded = require("jsonwebtoken").decode(token);
+          if (decoded && decoded.id) coordinator = decoded.id;
+        } catch (e) {}
+      }
       // categories[] dan details (JSON string)
       let categories = req.body["categories[]"] || req.body.categories || [];
       if (typeof categories === "string") categories = [categories];
@@ -886,7 +894,6 @@ router.get("/events/:id", async (req, res) => {
 // end ambil buat detail
 // buat munculin qr, klo mau pdf ga perlu, pakai atas aja
 
-
 router.get("/event-detail-with-qr/:id", async (req, res) => {
   const userId = req.query.userId;
 
@@ -1115,7 +1122,14 @@ router.post("/registrasi/:id/reject", async (req, res) => {
 router.get("/api/events-sertif", async (req, res) => {
   try {
     const events = await Event.findAll({
-      attributes: ["idevents", "name", "date_start", "date_end", "status"],
+      attributes: [
+        "idevents",
+        "name",
+        "date_start",
+        "date_end",
+        "status",
+        "coordinator",
+      ],
       include: [
         {
           model: EventDetail,
@@ -1297,4 +1311,73 @@ router.post(
     }
   }
 );
+
+// Get all sessions (sesi) for a registration (for QR scan modal)
+router.get("/api/registrasi/:registrasiId/sessions", async (req, res) => {
+  try {
+    const { registrasiId } = req.params;
+    // Ambil user id login dari header (Authorization: Bearer <token>)
+    let userIdLogin = null;
+    if (req.headers.authorization) {
+      try {
+        const token = req.headers.authorization.replace("Bearer ", "");
+        const decoded = require("jsonwebtoken").decode(token);
+        if (decoded && decoded.id) userIdLogin = decoded.id;
+      } catch (e) {}
+    }
+    // Cari Registrasi dan event terkait
+    const registrasi = await Registrasi.findByPk(registrasiId, {
+      include: [
+        {
+          model: Event,
+          as: "events",
+          attributes: ["coordinator", "name"],
+        },
+      ],
+    });
+    if (!registrasi || !registrasi.events) {
+      return res
+        .status(404)
+        .json({ message: "Registrasi atau event tidak ditemukan" });
+    }
+    // Cek apakah user login adalah koordinator event
+    if (
+      !userIdLogin ||
+      String(userIdLogin) !== String(registrasi.events.coordinator)
+    ) {
+      return res
+        .status(403)
+        .json({ message: "Silahkan cari panitia yang membuat event ini" });
+    }
+    // Find all RegistrasiDetail for this registration, include EventDetail for sesi name
+    const regDetails = await RegistrasiDetail.findAll({
+      where: { registrations_idregistrations: registrasiId },
+      include: [
+        {
+          model: EventDetail,
+          as: "eventDetail",
+          attributes: ["sesi", "date", "time_start", "time_end", "description"],
+        },
+      ],
+    });
+    if (!regDetails || regDetails.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "Tidak ada sesi untuk registrasi ini" });
+    }
+    // Return array of { idregistrations_detail, sesi, ... }
+    const result = regDetails.map((rd) => ({
+      idregistrations_detail: rd.idregistrations_detail,
+      sesi: rd.eventDetail?.sesi || "-",
+      date: rd.eventDetail?.date || null,
+      time_start: rd.eventDetail?.time_start || null,
+      time_end: rd.eventDetail?.time_end || null,
+      description: rd.eventDetail?.description || null,
+    }));
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Gagal mengambil sesi untuk registrasi" });
+  }
+});
 module.exports = router;

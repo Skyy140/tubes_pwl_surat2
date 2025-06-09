@@ -41,21 +41,49 @@
 @section('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Helper: extract user ID from JWT in localStorage
+            function getUserIdFromJWT() {
+                const token = localStorage.getItem('token');
+                if (!token) return null;
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    // Cek semua kemungkinan properti id yang digunakan backend
+                    if (payload.id !== undefined && payload.id !== null) return String(payload.id);
+                    if (payload.user_id !== undefined && payload.user_id !== null) return String(payload.user_id);
+                    if (payload.userid !== undefined && payload.userid !== null) return String(payload.userid);
+                    return null;
+                } catch (e) {
+                    return null;
+                }
+            }
+            const loggedInUserId = getUserIdFromJWT();
             fetch('http://localhost:3000/api/events-sertif')
                 .then(response => response.json())
                 .then(data => {
                     const tbody = document.getElementById('sertif-table-body');
                     tbody.innerHTML = '';
-                    data.forEach(event => {
+                    // Filter events: only show if coordinator matches logged-in user
+                    const filteredEvents = data.filter(event => {
+                        // event.coordinator could be string or number, so cast both to string for strict comparison
+                        return String(event.coordinator) === String(loggedInUserId);
+                    });
+                    if (filteredEvents.length === 0) {
+                        tbody.innerHTML =
+                            `<tr><td colspan="7" class="text-center">Tidak ada event yang Anda koordinatori.</td></tr>`;
+                        return;
+                    }
+                    filteredEvents.forEach(event => {
                         const eventRow = document.createElement('tr');
                         // Siapkan HTML untuk kolom sesi
                         let sesiHtml = '';
                         let actionHtml = '';
                         if (event.details && event.details.length > 0) {
                             sesiHtml = event.details.map(detail => `
-                                <div class="row align-items-center mb-1">
-                                    <div class="col-7"><span class="font-weight-bold">${detail.sesi}</span></div>
-                                    <div class="col-5 text-right">
+                                <div class="d-flex flex-column flex-md-row align-items-stretch mb-1" style="gap: 0.5rem;">
+                                    <div class="flex-fill mb-1 mb-md-0" style="word-break:break-word;">
+                                        <span class="font-weight-bold">${detail.sesi}</span>
+                                    </div>
+                                    <div class="text-right" style="min-width:110px;">
                                         <button class="btn btn-success btn-sm pilih-sesi-btn" data-event-id="${event.idevents}" data-sesi="${detail.sesi}">Pilih Sesi</button>
                                     </div>
                                 </div>

@@ -41,7 +41,7 @@
             <div id="content">
 
                 <!-- Topbar -->
-                @include('layout.navAdmin')
+                @include('layout.navPanit')
                 <!-- End of Topbar -->
 
                 <!-- Begin Page Content -->

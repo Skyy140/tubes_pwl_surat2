@@ -68,17 +68,35 @@
 @section('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Ambil user id login dari JWT
+            const token = localStorage.getItem('token');
+            let userIdLogin = null;
+            if (token) {
+                try {
+                    userIdLogin = window.jwt_decode(token).id;
+                } catch (e) {}
+            }
+            if (!userIdLogin) {
+                document.getElementById('event-table-body').innerHTML =
+                    `<tr><td colspan="13"><div class="alert alert-danger mb-0">Silakan login terlebih dahulu.</div></td></tr>`;
+                return;
+            }
             fetch('http://localhost:3000/api/events')
                 .then(response => response.json())
                 .then(data => {
                     const tbody = document.getElementById('event-table-body');
                     tbody.innerHTML = '';
-                    data.forEach(event => {
+                    // Filter hanya event yang coordinator == user login
+                    const filtered = data.filter(event => String(event.coordinator) === String(userIdLogin));
+                    if (filtered.length === 0) {
+                        tbody.innerHTML =
+                            `<tr><td colspan="13" class="text-muted text-center">Belum ada event yang Anda koordinatori.</td></tr>`;
+                        return;
+                    }
+                    filtered.forEach(event => {
                         const tr = document.createElement('tr');
-                        // Ambil nama file poster dari event.poster_path, lalu buat path ke public/poster di nodejs
                         let posterHtml = '-';
                         if (event.poster_path) {
-                            // Jika poster_path sudah berupa nama file saja, gunakan langsung. Jika path, ambil nama file saja.
                             let posterFileName = event.poster_path.split('/').pop();
                             let posterUrl = `http://localhost:3000/poster/${posterFileName}`;
                             posterHtml =
@@ -106,12 +124,11 @@
                     </td>
                 `;
                         tbody.appendChild(tr);
-
                     });
                 })
                 .catch(err => {
                     document.getElementById('event-table-body').innerHTML =
-                        `<tr><td colspan="6">Gagal memuat data</td></tr>`;
+                        `<tr><td colspan="13">Gagal memuat data</td></tr>`;
                 });
 
             // Modal HTML for delete confirmation
