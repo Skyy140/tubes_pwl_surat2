@@ -60,11 +60,19 @@
                 if (!res.ok) throw new Error(data.message || 'Gagal ambil detail event');
 
                 document.getElementById('eventTitle').innerText = data.name;
+                // const sertifikatPath = data.registrasi?.registrasiDetail?.attendances.certificate_path;
+                // const sertifikatUrl = sertifikatPath ? `http://localhost:3000${sertifikatPath}` : '#';
+                // const sertifikatDownloadUrl = sertifikatPath
+                //     ? `http://localhost:3000/download/${sertifikatPath.split('/').pop()}`
+                //     : '#';
+                const attendance = data.registrasi?.registrasiDetail?.flatMap(detail => detail.hadir)?.find(a => a.certificate_path);
+                const sertifikatPath = attendance?.certificate_path;
+
+                const sertifikatUrl = sertifikatPath ? `http://localhost:3000${sertifikatPath}` : '#';
 
                 const qrCodePath = data.registrasi?.qr_code
                     ? `http://localhost:3000${data.registrasi.qr_code}`
                     : '';
-
                 let html = `
                     <p><strong>Deskripsi:</strong> ${data.description || '-'}</p>
                     <p><strong>Tanggal:</strong> ${data.date_start || '-'} - ${data.date_end || '-'}</p>
@@ -73,23 +81,40 @@
                         <p>QR KAMU</p>
                         <img src="${qrCodePath}" alt="QR Code" style="max-width: 200px;">
                     ` : '<p><em>Tidak ada QR</em></p>'}
-                    <h4 class="mt-4">Sesi</h4>
+
                     <table class="table table-bordered">
                         <thead>
-                            <tr><th>No</th><th>Sesi</th><th>Tanggal</th><th>Waktu</th></tr>
+                            <tr>
+                                <th>No</th>
+                                <th>Sesi</th>
+                                <th>Tanggal</th>
+                                <th>Waktu</th>
+                                <th>Sertifikat</th>
+                            </tr>
                         </thead>
                         <tbody>
-                            ${(data.details || []).map((sesi, i) => `
-                                <tr>
-                                    <td>${i + 1}</td>
-                                    <td>${sesi.sesi}</td>
-                                    <td>${sesi.date}</td>
-                                    <td>${sesi.time_start} - ${sesi.time_end}</td>
-                                </tr>
-                            `).join('')}
+                            ${(data.registrasi?.registrasiDetail || []).map((detail, i) => {
+                                const sesi = data.details?.find(s => s.idevent_detail === detail.event_detail_idevent_detail);
+
+                                if (!sesi) return ''; 
+
+                                const certPath = detail.hadir?.[0]?.certificate_path;
+                                const certLink = certPath ? `<a href="http://localhost:3000${certPath}" target="_blank">Lihat</a>` : '-';
+
+                                return `
+                                    <tr>
+                                        <td>${i + 1}</td>
+                                        <td>${sesi.sesi}</td>
+                                        <td>${sesi.date}</td>
+                                        <td>${sesi.time_start} - ${sesi.time_end}</td>
+                                        <td>${certLink}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
                         </tbody>
                     </table>
                 `;
+                
 
                 document.getElementById('eventDetail').innerHTML = html;
             } catch (err) {

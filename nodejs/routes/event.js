@@ -44,7 +44,10 @@ router.get("/", async (req, res) => {
       include[0].where = { idcategory: categoryId };
     }
 
-    const events = await Event.findAll({ include });
+    const events = await Event.findAll({
+      where: { status: "active" }, 
+      include,
+    });
 
     res.json(events);
   } catch (error) {
@@ -659,6 +662,112 @@ router.get("/riwayat-pembayaran/user/:userId", async (req, res) => {
   }
 });
 
+router.get("/keuangan/riwayat-pembayaran", async (req, res) => {
+  try {
+
+    const data = await Registrasi.findAll({
+      subQuery: false,
+      include: [
+        {
+          model: User,
+          as: "user",
+          required: true,
+        },
+        {
+          model: Payment,
+          as: "payment",
+          required: true,
+        },
+        {
+          model: RegistrasiDetail,
+          as: "registrasiDetail",
+          include: [
+            {
+              model: EventDetail,
+              as: "eventDetail",
+              include: [
+                {
+                  model: Event,
+                  as: "event",
+                  include: [
+                    {
+                      model: Category,
+                      as: "categories",
+                      through: { attributes: [] },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    res.json(data);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Gagal mengambil data registrasi dengan payment",
+    });
+  }
+});
+
+router.get("/keuangan/riwayat-pembayaran-detail/:eventId/:userId", async (req, res) => {
+  try {
+    const { userId, eventId } = req.params;
+    console.log("Params", req.params);
+    const data = await Registrasi.findAll({
+      where: {users_idusers: userId,
+        events_idevents: eventId,
+      },
+      include: [
+        {
+          model: User,
+          as: "user",
+          required: true,
+        },
+        {
+          model: Payment,
+          as: "payment",
+          required: false,
+        },
+        {
+          model: RegistrasiDetail,
+          as: "registrasiDetail",
+          include: [
+            {
+              model: EventDetail,
+              as: "eventDetail",
+              include: [
+                {
+                  model: Event,
+                  as: "event",
+                  include: [
+                    {
+                      model: Category,
+                      as: "categories",
+                      through: { attributes: [] },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    res.json(data);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Gagal mengambil data registrasi dengan payment",
+    });
+  }
+});
+
 router.get("/riwayat-pembayaran/registrasi/:registrasiId", async (req, res) => {
   try {
     const { registrasiId } = req.params;
@@ -893,7 +1002,6 @@ router.get("/events/:id", async (req, res) => {
 });
 // end ambil buat detail
 // buat munculin qr, klo mau pdf ga perlu, pakai atas aja
-
 router.get("/event-detail-with-qr/:id", async (req, res) => {
   const userId = req.query.userId;
 
@@ -916,8 +1024,21 @@ router.get("/event-detail-with-qr/:id", async (req, res) => {
           model: Registrasi,
           as: "registrasi",
           where: { users_idusers: userId },
-          attributes: ["qr_code"],
+          attributes: ["qr_code", "idregistrations"],
           required: false,
+          include: [
+            {
+              model: RegistrasiDetail,
+              as: "registrasiDetail",
+              include: [
+                {
+                  model: Attendance,
+                  as: "hadir",
+                  attributes: ["certificate_path"],
+                },
+              ],
+            },
+          ],
         },
       ],
     });
@@ -930,13 +1051,14 @@ router.get("/event-detail-with-qr/:id", async (req, res) => {
       ...event.toJSON(),
       registrasi: event.registrasi?.[0] || null,
     };
-
+    console.log(JSON.stringify(result, null, 2));
     res.json(result);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Gagal mengambil data event" });
   }
 });
+
 
 const PDFDocument = require("pdfkit");
 

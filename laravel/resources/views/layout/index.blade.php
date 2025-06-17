@@ -156,10 +156,23 @@
             const eventSayaMenu = document.getElementById('eventSayaMenu');
             const riwayatPembayaranMenu = document.getElementById('riwayatPembayaranMenu');
             let role = getRoleFromToken(token);
-            if (role != "member") {
-                if (eventSayaMenu) eventSayaMenu.style.display = 'none';
+            // if (role != "member") {
+            //     if (eventSayaMenu) eventSayaMenu.style.display = 'none';
+            //     if (riwayatPembayaranMenu) riwayatPembayaranMenu.style.display = 'none';
+            // }
+            if (role == "member") { 
+            } 
+            else if (role == 3 || role == "3" || role == "keuangan") {
+                if (riwayatPembayaranMenu) {
+                    riwayatPembayaranMenu.querySelector("a").setAttribute("href", "/keuangan/riwayat-pembayaran");
+                }
+                if (eventSayaMenu) eventSayaMenu.style.display = 'none'; 
+            } 
+            else {
                 if (riwayatPembayaranMenu) riwayatPembayaranMenu.style.display = 'none';
+                if (eventSayaMenu) eventSayaMenu.style.display = 'none';
             }
+
             if (token) {
                 let role = getRoleFromToken(token);
                 let profileUrl = "/member/profile";

@@ -72,7 +72,6 @@ User.hasMany(Registrasi, {
 });
 Registrasi.belongsTo(User, {
   foreignKey: "users_idusers",
-  // as: "user",
 });
 
 Event.hasMany(Registrasi, {
@@ -113,7 +112,7 @@ RegistrasiDetail.belongsTo(EventDetail, {
 
 RegistrasiDetail.hasMany(Attendance, {
   foreignKey: "registrations_detail_idregistrations_detail",
-  // as: "attendance",
+  as: "hadir",
 });
 Attendance.belongsTo(RegistrasiDetail, {
   foreignKey: "registrations_detail_idregistrations_detail",

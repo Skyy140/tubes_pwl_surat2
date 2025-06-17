@@ -121,6 +121,9 @@ Route::get('/event-saya/update-bukti/{registrasiId}', function ($registrasiId) {
     return view('member.update_bukti', compact('registrasiId'));
 });
 
+Route::get('/keuangan/riwayat-pembayaran', function () {
+    return view('keuangan.riwayat-pembayaran');
+})->name('keuangan.riwayat-pembayaran');
 
 
 Route::get('/keuangan/dashboard', function () {
@@ -169,3 +172,7 @@ Route::get('/keuangan/profile', function () {
     }
     return view('keuangan.profile', compact('user'));
 })->name('keuangan.profile');
+
+Route::get('/riwayat-pembayaran-detail/{idevents}/{iduser}', function () {
+    return view('keuangan.riwayat-pembayaran-detail'); // file: resources/views/event-detail.blade.php
+});
