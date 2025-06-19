@@ -128,8 +128,8 @@
     <script src="{{ asset('assetsAdmin/vendor/datatables/dataTables.bootstrap4.min.js') }}"></script>
 
     <!-- Page level custom scripts -->
-    <script src="{{ asset('assetsadmin/js/demo/chart-area-demo.js') }}"></script>
-    <script src="{{ asset('assetsadmin/js/demo/chart-pie-demo.js') }}"></script>
+    <script src="{{ asset('assetsadmin/js/demo/chart-area-panit.js') }}"></script>
+    <script src="{{ asset('assetsadmin/js/demo/chart-pie-panit.js') }}"></script>
 
     <script>
         $(document).ready(function() {
@@ -142,6 +142,20 @@
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @yield('scripts')
+    <script>
+        // Kirim userIdLogin ke JS agar chart-area-panit.js bisa akses id user login
+        document.addEventListener("DOMContentLoaded", function() {
+            const token = localStorage.getItem('token');
+            if (token) {
+                try {
+                    const decoded = window.jwt_decode(token);
+                    window.userIdLogin = decoded.id;
+                } catch (e) {
+                    window.userIdLogin = null;
+                }
+            }
+        });
+    </script>
 </body>
 
 </html>

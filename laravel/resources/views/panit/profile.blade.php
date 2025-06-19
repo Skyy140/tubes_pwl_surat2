@@ -102,7 +102,7 @@
                 msg.innerHTML = '<div class="alert alert-success">' + data.message + '</div>';
                 document.getElementById('password').value = '';
                 setTimeout(function() {
-                    window.location.href = '/admin/dashboard';
+                    window.location.href = '/panit/dashboard';
                 }, 1500);
             } else {
                 msg.innerHTML = '<div class="alert alert-danger">' + (data.message || 'Gagal update profil') +

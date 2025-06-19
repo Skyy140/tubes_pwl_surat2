@@ -45,7 +45,7 @@ router.get("/", async (req, res) => {
     }
 
     const events = await Event.findAll({
-      where: { status: "active" }, 
+      where: { status: "active" },
       include,
     });
 
@@ -664,7 +664,6 @@ router.get("/riwayat-pembayaran/user/:userId", async (req, res) => {
 
 router.get("/keuangan/riwayat-pembayaran", async (req, res) => {
   try {
-
     const data = await Registrasi.findAll({
       subQuery: false,
       include: [
@@ -713,60 +712,61 @@ router.get("/keuangan/riwayat-pembayaran", async (req, res) => {
   }
 });
 
-router.get("/keuangan/riwayat-pembayaran-detail/:eventId/:userId", async (req, res) => {
-  try {
-    const { userId, eventId } = req.params;
-    console.log("Params", req.params);
-    const data = await Registrasi.findAll({
-      where: {users_idusers: userId,
-        events_idevents: eventId,
-      },
-      include: [
-        {
-          model: User,
-          as: "user",
-          required: true,
-        },
-        {
-          model: Payment,
-          as: "payment",
-          required: false,
-        },
-        {
-          model: RegistrasiDetail,
-          as: "registrasiDetail",
-          include: [
-            {
-              model: EventDetail,
-              as: "eventDetail",
-              include: [
-                {
-                  model: Event,
-                  as: "event",
-                  include: [
-                    {
-                      model: Category,
-                      as: "categories",
-                      through: { attributes: [] },
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    });
+router.get(
+  "/keuangan/riwayat-pembayaran-detail/:eventId/:userId",
+  async (req, res) => {
+    try {
+      const { userId, eventId } = req.params;
+      console.log("Params", req.params);
+      const data = await Registrasi.findAll({
+        where: { users_idusers: userId, events_idevents: eventId },
+        include: [
+          {
+            model: User,
+            as: "user",
+            required: true,
+          },
+          {
+            model: Payment,
+            as: "payment",
+            required: false,
+          },
+          {
+            model: RegistrasiDetail,
+            as: "registrasiDetail",
+            include: [
+              {
+                model: EventDetail,
+                as: "eventDetail",
+                include: [
+                  {
+                    model: Event,
+                    as: "event",
+                    include: [
+                      {
+                        model: Category,
+                        as: "categories",
+                        through: { attributes: [] },
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
 
-    res.json(data);
-    console.log(data);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      message: "Gagal mengambil data registrasi dengan payment",
-    });
+      res.json(data);
+      console.log(data);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({
+        message: "Gagal mengambil data registrasi dengan payment",
+      });
+    }
   }
-});
+);
 
 router.get("/riwayat-pembayaran/registrasi/:registrasiId", async (req, res) => {
   try {
@@ -1058,7 +1058,6 @@ router.get("/event-detail-with-qr/:id", async (req, res) => {
     res.status(500).json({ message: "Gagal mengambil data event" });
   }
 });
-
 
 const PDFDocument = require("pdfkit");
 
@@ -1502,4 +1501,79 @@ router.get("/api/registrasi/:registrasiId/sessions", async (req, res) => {
     res.status(500).json({ message: "Gagal mengambil sesi untuk registrasi" });
   }
 });
+
+// Endpoint: Jumlah event per bulan untuk panitia (coordinator)
+router.get("/count/by-month", async (req, res) => {
+  try {
+    // Ambil id user login dari query atau header (misal: req.query.coordinator atau dari token)
+    let coordinator = req.query.coordinator;
+    if (!coordinator && req.headers.authorization) {
+      // Jika pakai JWT, decode token untuk dapatkan id user
+      const token = req.headers.authorization.split(" ")[1];
+      const jwt = require("jsonwebtoken");
+      const decoded = jwt.decode(token);
+      if (decoded && decoded.id) coordinator = decoded.id;
+    }
+    if (!coordinator)
+      return res.status(400).json({ message: "Coordinator id diperlukan" });
+
+    // Ambil semua event milik user login (coordinator)
+    const events = await Event.findAll({
+      where: { coordinator },
+      attributes: ["created_at"],
+    });
+    // Hitung per bulan
+    const counts = Array(12).fill(0);
+    events.forEach((e) => {
+      if (e.created_at) {
+        const d = new Date(e.created_at);
+        if (!isNaN(d)) counts[d.getMonth()]++;
+      }
+    });
+    res.json(counts);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Endpoint: Pie chart kategori event per user login (coordinator)
+router.get("/count/by-category", async (req, res) => {
+  try {
+    let coordinator = req.query.coordinator;
+    if (!coordinator && req.headers.authorization) {
+      const token = req.headers.authorization.split(" ")[1];
+      const jwt = require("jsonwebtoken");
+      const decoded = jwt.decode(token);
+      if (decoded && decoded.id) coordinator = decoded.id;
+    }
+    if (!coordinator)
+      return res.status(400).json({ message: "Coordinator id diperlukan" });
+
+    // Ambil event milik user login beserta kategori
+    const events = await Event.findAll({
+      where: { coordinator },
+      include: [
+        {
+          model: Category,
+          as: "categories",
+          through: { attributes: [] },
+          attributes: ["idcategory", "name"],
+        },
+      ],
+      attributes: ["idevents"],
+    });
+    // Hitung jumlah event per kategori
+    const categoryCounts = {};
+    events.forEach((event) => {
+      event.categories.forEach((cat) => {
+        if (!categoryCounts[cat.name]) categoryCounts[cat.name] = 0;
+        categoryCounts[cat.name]++;
+      });
+    });
+    res.json(categoryCounts);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = router;
