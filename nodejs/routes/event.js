@@ -764,6 +764,9 @@ router.get(
   async (req, res) => {
     try {
       const data = await Registrasi.findAll({
+        where: {
+          status: ['selesai', 'gagal'], 
+        },
         subQuery: false,
         include: [
           {

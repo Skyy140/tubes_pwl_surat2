@@ -9,8 +9,7 @@
                 <div class="row gy-5">
                     {{-- Kiri: Detail Event --}}
                     <div class="col-lg-7">
-                        <img src="http://localhost:3000{{ $daftar_event['poster_path'] }}"
-                            class="img-fluid rounded mb-4 shadow-sm" alt="Event Image"
+                        <img src="http://localhost:3000{{ $daftar_event['poster_path'] }}" class="img-fluid rounded mb-4 shadow-sm" alt="Event Image"
                             style="max-height: 350px; object-fit: cover; width: 100%;">
 
 
@@ -111,15 +110,15 @@
                                 <div class="mb-4">
                                     <label class="form-label fw-semibold">Pilihan Sesi</label>
 
-
+                                    
 
                                     @if (!empty($daftar_event['details']))
                                         <div class="form-check mb-2">
-                                            <input class="form-check-input" type="checkbox" id="checkAllSessions">
-                                            <label class="form-check-label" for="checkAllSessions">
-                                                Semua Sesi
-                                            </label>
-                                        </div>
+                                        <input class="form-check-input" type="checkbox" id="checkAllSessions">
+                                        <label class="form-check-label" for="checkAllSessions">
+                                            Semua Sesi
+                                        </label>
+                                    </div>
                                         @foreach ($daftar_event['details'] as $detail)
                                             <div class="form-check">
                                                 <input class="form-check-input sesi-checkbox" type="checkbox" name="sesi[]"
@@ -198,16 +197,16 @@
         document.addEventListener('DOMContentLoaded', loadProfile);
 
         // sesi
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const checkAll = document.getElementById('checkAllSessions');
             const sesiCheckboxes = document.querySelectorAll('.sesi-checkbox');
 
-            checkAll.addEventListener('change', function() {
+            checkAll.addEventListener('change', function () {
                 sesiCheckboxes.forEach(cb => cb.checked = checkAll.checked);
             });
 
             sesiCheckboxes.forEach(cb => {
-                cb.addEventListener('change', function() {
+                cb.addEventListener('change', function () {
                     if (!this.checked) {
                         checkAll.checked = false;
                     } else {
@@ -220,7 +219,7 @@
         });
 
         // daftar 
-        document.getElementById('registration-form').addEventListener('submit', async function(e) {
+        document.getElementById('registration-form').addEventListener('submit', async function (e) {
             e.preventDefault();
 
             const token = localStorage.getItem('token');
@@ -258,7 +257,7 @@
             });
 
             if (!konfirmasi.isConfirmed) {
-                return;
+                return; 
             }
             const eventId = {{ $daftar_event['idevents'] }};
             try {
@@ -282,9 +281,9 @@
                         icon: 'success',
                         title: 'Berhasil!',
                         text: 'Registrasi berhasil!',
-                    }).then(() => {
-                        window.location.href = '/';
-                    });
+                    }) .then(() => {
+                        window.location.href = '/';  
+                });
                 } else {
                     Swal.fire({
                         icon: 'error',
@@ -301,6 +300,7 @@
                 });
             }
         });
+
     </script>
 
 @endsection
