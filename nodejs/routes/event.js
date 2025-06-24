@@ -1,3 +1,5 @@
+const auth = require("../middleware/auth");
+const role = require("../middleware/role");
 const express = require("express");
 const { Sequelize, Op } = require("sequelize");
 const router = express.Router();
@@ -662,7 +664,7 @@ router.get("/riwayat-pembayaran/user/:userId", async (req, res) => {
   }
 });
 
-router.get("/keuangan/riwayat-pembayaran", async (req, res) => {
+router.get("/keuangan/riwayat-pembayaran", auth, role(["keuangan", "member"]), async (req, res) => {
   try {
     const data = await Registrasi.findAll({
       subQuery: false,
@@ -713,7 +715,7 @@ router.get("/keuangan/riwayat-pembayaran", async (req, res) => {
 });
 
 router.get(
-  "/keuangan/riwayat-pembayaran-detail/:eventId/:userId",
+  "/keuangan/riwayat-pembayaran-detail/:eventId/:userId", auth, role(["keuangan"]),
   async (req, res) => {
     try {
       const { userId, eventId } = req.params;

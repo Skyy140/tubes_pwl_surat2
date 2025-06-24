@@ -176,3 +176,7 @@ Route::get('/keuangan/profile', function () {
 Route::get('/riwayat-pembayaran-detail/{idevents}/{iduser}', function () {
     return view('keuangan.riwayat-pembayaran-detail'); // file: resources/views/event-detail.blade.php
 });
+
+Route::get('/forbidden', function () {
+    return view('forbidden');
+});

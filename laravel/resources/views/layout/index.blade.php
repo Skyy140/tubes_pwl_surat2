@@ -41,9 +41,9 @@
 
             <nav id="navmenu" class="navmenu">
                 <ul>
-                    <li><a href="/" class="{{ request()->is('/') ? 'active' : '' }}">Beranda<br></a></li>
+                    {{-- <li><a href="/" class="{{ request()->is('/') ? 'active' : '' }}">Beranda<br></a></li>
                     <li><a href="/#services" class="{{ request()->is('/') ? '' : '' }}">Event</a></li>
-                    <li><a href="/#team" class="{{ request()->is('/') ? '' : '' }}">Tim</a></li>
+                    <li><a href="/#team" class="{{ request()->is('/') ? '' : '' }}">Tim</a></li> --}}
                     <li id="eventSayaMenu"><a href="{{ route('event.saya') }}"
                             class="{{ request()->is('event-saya') ? 'active' : '' }}">Event Saya</a></li>
                     <li id="riwayatPembayaranMenu"><a href="{{ route('riwayat.pembayaran') }}"

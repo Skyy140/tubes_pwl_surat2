@@ -15,89 +15,24 @@
         </div>
     </main>
 
-    {{-- <script>
-        async function main() {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                document.getElementById('profileMessage').innerHTML =
-                    '<div class="alert alert-danger">Silakan login terlebih dahulu.</div>';
-                return;
-            }
-
-            let decoded;
-            try {
-                decoded = window.jwt_decode(token);
-            } catch (e) {
-                document.getElementById('profileMessage').innerHTML =
-                    '<div class="alert alert-danger">Token tidak valid. Silakan login ulang.</div>';
-                return;
-            }
-
-            const userId = decoded.id;
-            const eventId = window.location.pathname.split('/').pop();
-
-
-            try {
-                const res = await fetch(`http://localhost:3000/api/events/keuangan/riwayat-pembayaran-detail/${eventId}/${userId}`);
-                const data = await res.json();
-                console.log('Data dari API:', data);
-                if (!res.ok) throw new Error(data.message || 'Gagal ambil detail event');
-
-                document.getElementById('eventTitle').innerText = data.name;
-
-                let html = `
-                    <p><strong>Deskripsi:</strong> ${data.bukti_pdf || '-'}</p>
-                    <p><strong>Tanggal:</strong> ${data.date_start || '-'} - ${data.date_end || '-'}</p>
-                    <p><strong>Lokasi:</strong> ${data.location || '-'}</p>
-                    <img src="${data.payment?.payment_proof_path || '-'}" alt="Bukti Pembayaran" class="img-fluid mb-3" style="max-width: 200px;">
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>No</th>
-                                <th>Sesi</th>
-                                <th>Tanggal</th>
-                                <th>Waktu</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${(data.registrasi?.registrasiDetail || []).map((detail, i) => {
-                                const sesi = data.details?.find(s => s.idevent_detail === detail.event_detail_idevent_detail);
-
-                                if (!sesi) return ''; 
-
-
-                                return `
-                                    <tr>
-                                        <td>${i + 1}</td>
-                                        <td>${sesi.sesi}</td>
-                                        <td>${sesi.date}</td>
-                                        <td>${sesi.time_start} - ${sesi.time_end}</td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
-                `;
-                
-
-                document.getElementById('eventDetail').innerHTML = html;
-            } catch (err) {
-                document.getElementById('eventDetail').innerHTML =
-                    `<div class="alert alert-danger">${err.message}</div>`;
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', main);
-    </script> --}}
     <script>
         async function main() {
+            const token = localStorage.getItem('token');
             const pathParts = window.location.pathname.split('/');
             const eventId = pathParts[pathParts.length - 2]; // ambil 11
             const userId = pathParts[pathParts.length - 1];
 
             try {
-                const res = await fetch(`http://localhost:3000/api/events/keuangan/riwayat-pembayaran-detail/${eventId}/${userId}`);
-                const apiData = await res.json(); // Ganti nama variabel agar tidak ambigu
+                const res = await fetch(`http://localhost:3000/api/events/keuangan/riwayat-pembayaran-detail/${eventId}/${userId}`, 
+                    {
+                        headers: {  
+                            'Authorization': `Bearer ${token}` 
+                        }
+                    }
+                );
+
+                // const res = await fetch(`http://localhost:3000/api/events/keuangan/riwayat-pembayaran-detail/${eventId}/${userId}`);
+                const apiData = await res.json(); 
                 console.log('Data dari API:', apiData);
 
                 if (!res.ok) throw new Error(apiData.message || 'Gagal ambil detail event');
