@@ -19,27 +19,18 @@
                 </p>
                 <p><strong>Keterangan:</strong> {{ $event['description'] }}</p>
                 <h4 class="mb-3"><i class="bi bi-person"></i> Pembicara</h4>
-                @if (!empty($event['speakers']))
-                    <div class="row">
-                        @foreach ($event['speakers'] as $speaker)
-                            <div class="col-md-4 mb-4" style="max-width: 250px">
-                                <div class="card h-100">
-                                    <img src="{{ asset('assets/img/team/team-1.jpg') }}" class="img-fluid" alt=""
-                                        style="height: 250px; width: 250px; object-fit: cover;">
-                                    <div class="card-body">
-                                        <h5 class="card-title">{{ $speaker['name'] }}</h5>
-                                        @if (!empty($speaker['description']))
-                                            <p class="card-text">{{ $speaker['description'] }}</p>
-                                        @else
-                                            <p class="card-text"><em>Deskripsi belum tersedia.</em></p>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
+                @if (!empty($event['details']))
+                    <p class="mb-3"><i class=""></i>
+                        @foreach ($event['details'] as $detail)
+                            @foreach ($detail['speakers'] as $speaker)
+                                {{ $speaker['name'] }}@if (!$loop->last)
+                                    ,
+                                @endif
+                            @endforeach
                         @endforeach
-                    </div>
+                    </p>
                 @else
-                    <p>Tidak Ada Pembicara</p>
+                    <p>Tidak Ada Nama</p>
                 @endif
                 <div class="card-footer bg-transparent border-top-0 text-end">
                     <a href="{{ url('/event/' . $event['idevents']) . '/daftar' }}"
