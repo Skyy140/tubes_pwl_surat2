@@ -234,7 +234,8 @@
                 </div>
                 <div class="form-group col-md-4">
                     <label>Photo Path</label>
-                    <input type="text" class="form-control speaker-photo-input" name="details[${detailIdx}][speakers][${idx}][photo_path]" value="${spk.photo_path || ''}" required>
+                    <input type="file" accept="image/*" class="form-control speaker-photo-input" name="details[${detailIdx}][speakers][${idx}][photo_file]" style="${spk.idspeaker && spk.idspeaker !== '__new__' ? 'display:none;' : ''}">
+                    <img class="speaker-photo-preview mt-2" style="max-width:80px;max-height:80px;${spk.photo_path ? 'display:block;' : 'display:none;'}" src="${spk.photo_path ? 'http://localhost:3000' + spk.photo_path : '#'}" />
                 </div>
             </div>
             <button type="button" class="btn btn-danger btn-remove-speaker mt-2">Hapus Speaker</button>
@@ -263,31 +264,64 @@
                 const descInput = group.querySelector('.speaker-desc-input');
                 const photoInput = group.querySelector('.speaker-photo-input');
                 const nameInput = group.querySelector('.speaker-name-input');
+                const preview = group.querySelector('.speaker-photo-preview');
                 const selectedId = select.value;
                 if (selectedId === "__new__") {
                     nameInput.style.display = '';
                     nameInput.required = true;
                     descInput.value = '';
-                    photoInput.value = '';
                     descInput.readOnly = false;
-                    photoInput.readOnly = false;
+                    photoInput.value = '';
+                    photoInput.style.display = '';
+                    photoInput.required = true;
+                    preview.src = '#';
+                    preview.style.display = 'none';
                 } else if (selectedId) {
                     const spk = allSpeakers.find(s => s.idspeaker == selectedId);
                     if (spk) {
                         nameInput.style.display = 'none';
                         nameInput.required = false;
                         descInput.value = spk.description || '';
-                        photoInput.value = spk.photo_path || '';
                         descInput.readOnly = true;
-                        photoInput.readOnly = true;
+                        photoInput.value = '';
+                        photoInput.style.display = 'none';
+                        photoInput.required = false;
+                        if (spk.photo_path) {
+                            preview.src = "http://localhost:3000" + spk.photo_path;
+                            preview.style.display = 'block';
+                        } else {
+                            preview.src = '#';
+                            preview.style.display = 'none';
+                        }
                     }
                 } else {
                     nameInput.style.display = 'none';
                     nameInput.required = false;
                     descInput.value = '';
-                    photoInput.value = '';
                     descInput.readOnly = false;
-                    photoInput.readOnly = false;
+                    photoInput.value = '';
+                    photoInput.style.display = '';
+                    photoInput.required = false;
+                    preview.src = '#';
+                    preview.style.display = 'none';
+                }
+            }
+        });
+        // Event delegation untuk preview photo speaker
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('speaker-photo-input')) {
+                const file = e.target.files[0];
+                const preview = e.target.parentElement.querySelector('.speaker-photo-preview');
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(ev) {
+                        preview.src = ev.target.result;
+                        preview.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    preview.src = '#';
+                    preview.style.display = 'none';
                 }
             }
         });

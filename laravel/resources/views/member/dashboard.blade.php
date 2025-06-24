@@ -137,7 +137,7 @@
                                         </p>
                                     @else
                                         <p>Tidak Ada Sesi</p>
-                                    @endif 
+                                    @endif
                                 </div>
                                 <div class="card-footer bg-transparent border-top-0 text-end">
                                     <a href="{{ route('event.detail', ['id' => $event['idevents']]) }}}"
@@ -165,7 +165,7 @@
         <section id="team" class="team section">
 
             <!-- Section Title -->
-            <div class="container section-title" data-aos="fade-up">
+            {{-- <div class="container section-title" data-aos="fade-up">
                 <h2>Team</h2>
                 <p>Necessitatibus eius consequatur ex aliquid fuga eum quidem sint consectetur velit</p>
             </div><!-- End Section Title -->
@@ -248,7 +248,7 @@
 
                 </div>
 
-            </div>
+            </div> --}}
 
         </section>
         <!-- /Team Section -->

@@ -72,22 +72,20 @@
         <footer id="footer" class="footer">
 
             <div class="container">
-                <div class="copyright text-center ">
+                {{-- <div class="copyright text-center ">
                     <p>© <span>Hak Cipta</span> <strong class="px-1 sitename">Vesperr</strong> <span>Semua Hak
                             Dilindungi</span></p>
-                </div>
+                </div> --}}
                 <div class="social-links d-flex justify-content-center">
-                    <a href=""><i class="bi bi-twitter-x"></i></a>
-                    <a href=""><i class="bi bi-facebook"></i></a>
-                    <a href=""><i class="bi bi-instagram"></i></a>
-                    <a href=""><i class="bi bi-linkedin"></i></a>
+                    <a href="https://www.x.com/ukm_official"><i class="bi bi-twitter-x"></i></a>
+                    <a href="https://www.instagram.com/universitaskristenmaranatha"><i class="bi bi-instagram"></i></a>
                 </div>
                 <div class="credits">
                     <!-- All the links in the footer should remain intact. -->
                     <!-- You can delete the links only if you've purchased the pro version. -->
                     <!-- Licensing information: https://bootstrapmade.com/license/ -->
                     <!-- Purchase the pro version with working PHP/AJAX contact form: [buy-url] -->
-                    Dirancang oleh <a href="https://bootstrapmade.com/">BootstrapMade</a>
+                    Dirancang oleh Alfian Febiana Santika - 2372035 dan Joshua Christian Benedict - 2372045</a>
                 </div>
             </div>
 
@@ -160,15 +158,12 @@
             //     if (eventSayaMenu) eventSayaMenu.style.display = 'none';
             //     if (riwayatPembayaranMenu) riwayatPembayaranMenu.style.display = 'none';
             // }
-            if (role == "member") { 
-            } 
-            else if (role == 3 || role == "3" || role == "keuangan") {
+            if (role == "member") {} else if (role == 3 || role == "3" || role == "keuangan") {
                 if (riwayatPembayaranMenu) {
                     riwayatPembayaranMenu.querySelector("a").setAttribute("href", "/keuangan/riwayat-pembayaran");
                 }
-                if (eventSayaMenu) eventSayaMenu.style.display = 'none'; 
-            } 
-            else {
+                if (eventSayaMenu) eventSayaMenu.style.display = 'none';
+            } else {
                 if (riwayatPembayaranMenu) riwayatPembayaranMenu.style.display = 'none';
                 if (eventSayaMenu) eventSayaMenu.style.display = 'none';
             }

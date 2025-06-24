@@ -102,27 +102,31 @@
                             posterHtml =
                                 `<img src="${posterUrl}" alt="Poster" style="max-width:60px;max-height:60px;">`;
                         }
+                        // Tambahkan badge status
+                        let statusHtml = event.status === 'inactive' ?
+                            '<span class="badge badge-danger">Inactive</span>' :
+                            '<span class="badge badge-success">Active</span>';
                         tr.innerHTML = `
-                    <td>${event.idevents}</td>
-                    <td>${event.name}</td>
-                    <td>${event.date_start ? event.date_start : '-'}</td>
-                    <td>${event.date_end ? event.date_end : '-'}</td>
-                    <td>${posterHtml}</td>
-                    <td>${event.time ? event.time : '-'}</td>
-                    <td>${event.location ? event.location : '-'}</td>
-                    <td>${event.registration_fee ? event.registration_fee : '-'}</td>
-                    <td>${event.max_participants ? event.max_participants : '-'}</td>
-                    <td>${event.status ? event.status : '-'}</td>
-                    <td>${event.description ? event.description : '-'}</td>
-                    <td>${event.coordinator ? event.coordinator : '-'}</td>
-                    <td class="text-center">
-                        <div class="d-flex justify-content-center" style="gap: 4px;">
-                            <button class="btn btn-info btn-sm lihat-detail-btn" style="min-width: 90px;" data-event-id="${event.idevents}">Lihat Detail</button>
-                            <a href="/panit/edit-event/${event.idevents}" title="Edit" class="btn btn-warning btn-sm" style="min-width: 90px;">Edit</a>
-                            <a href="#" title="Delete" class="btn btn-danger btn-sm delete-event-btn" style="min-width: 90px;">Delete</a>
-                        </div>
-                    </td>
-                `;
+<td>${event.idevents}</td>
+<td>${event.name}</td>
+<td>${event.date_start ? event.date_start : '-'}</td>
+<td>${event.date_end ? event.date_end : '-'}</td>
+<td>${posterHtml}</td>
+<td>${event.time ? event.time : '-'}</td>
+<td>${event.location ? event.location : '-'}</td>
+<td>${event.registration_fee ? event.registration_fee : '-'}</td>
+<td>${event.max_participants ? event.max_participants : '-'}</td>
+<td>${statusHtml}</td>
+<td>${event.description ? event.description : '-'}</td>
+<td>${event.coordinator ? event.coordinator : '-'}</td>
+<td class="text-center">
+    <div class="d-flex justify-content-center" style="gap: 4px;">
+        <button class="btn btn-info btn-sm lihat-detail-btn" style="min-width: 90px;" data-event-id="${event.idevents}">Lihat Detail</button>
+        <a href="/panit/edit-event/${event.idevents}" title="Edit" class="btn btn-warning btn-sm" style="min-width: 90px;">Edit</a>
+        <a href="#" title="Delete" class="btn btn-danger btn-sm delete-event-btn" data-event-id="${event.idevents}" style="min-width: 90px;">Delete</a>
+    </div>
+</td>
+`;
                         tbody.appendChild(tr);
                     });
                 })
@@ -199,7 +203,15 @@
                     .then(data => {
                         const tbody = document.getElementById('event-table-body');
                         tbody.innerHTML = '';
-                        data.forEach(event => {
+                        // Filter hanya event milik user login (tanpa filter status)
+                        const filtered = data.filter(event => String(event.coordinator) === String(
+                            userIdLogin));
+                        if (filtered.length === 0) {
+                            tbody.innerHTML =
+                                `<tr><td colspan="13" class="text-muted text-center">Belum ada event yang Anda koordinatori.</td></tr>`;
+                            return;
+                        }
+                        filtered.forEach(event => {
                             const tr = document.createElement('tr');
                             let posterHtml = '-';
                             if (event.poster_path) {
@@ -209,6 +221,9 @@
                                 posterHtml =
                                     `<img src="${posterUrl}" alt="Poster" style="max-width:60px;max-height:60px;">`;
                             }
+                            let statusHtml = event.status === 'inactive' ?
+                                '<span class="badge badge-danger">Inactive</span>' :
+                                '<span class="badge badge-success">Active</span>';
                             tr.innerHTML = `
                     <td>${event.idevents}</td>
                     <td>${event.name}</td>
@@ -219,7 +234,7 @@
                     <td>${event.location ? event.location : '-'}</td>
                     <td>${event.registration_fee ? event.registration_fee : '-'}</td>
                     <td>${event.max_participants ? event.max_participants : '-'}</td>
-                    <td>${event.status ? event.status : '-'}</td>
+                    <td>${statusHtml}</td>
                     <td>${event.description ? event.description : '-'}</td>
                     <td>${event.coordinator ? event.coordinator : '-'}</td>
                     <td class="text-center">
