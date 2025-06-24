@@ -223,11 +223,83 @@ const posterStorage = multer.diskStorage({
     cb(null, unique + path.extname(file.originalname));
   },
 });
+const photopathStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const dest = path.join(__dirname, "../public/photopath");
+    if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
+    cb(null, dest);
+  },
+  filename: function (req, file, cb) {
+    const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, unique + path.extname(file.originalname));
+  },
+});
+const uploadPhoto = multer({ storage: photopathStorage });
 const uploadPoster = multer({ storage: posterStorage });
 
+// Middleware untuk handle multiple file (poster + speaker photos)
+function multiUpload(req, res, next) {
+  const upload = uploadPoster.single("poster");
+  upload(req, res, function (err) {
+    if (err) return next(err);
+    // Proses upload semua file speaker photo
+    const photoFields = Object.keys(req.files || {}).filter((k) =>
+      k.startsWith("speaker_photo_")
+    );
+    if (photoFields.length === 0 && req.files && req.files.length > 0) {
+      // Multer v2: req.files is array
+      req.speakerPhotos = {};
+      return next();
+    }
+    // Untuk multer v1: req.files is object
+    req.speakerPhotos = {};
+    const files = [];
+    for (const key in req.body) {
+      if (
+        key.startsWith("speaker_photo_") &&
+        req.body[key] instanceof Object &&
+        req.body[key].path
+      ) {
+        req.speakerPhotos[key] = req.body[key].filename;
+      }
+    }
+    next();
+  });
+}
+
+// PATCH: gunakan uploadPoster dan uploadPhoto secara manual
 router.post(
   "/admin/tambah-event",
-  uploadPoster.single("poster"),
+  function (req, res, next) {
+    // Gunakan multer.fields agar semua file (poster + speaker_photo_*) bisa diterima
+    // Pertama, terima semua file (poster dan speaker_photo_*)
+
+    // Karena field speaker_photo_* baru diketahui saat submit, kita terima semua file apapun field-nya
+    const storage = multer.diskStorage({
+      destination: function (req, file, cb) {
+        if (file.fieldname === "poster") {
+          const dest = path.join(__dirname, "../public/poster");
+          if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
+          cb(null, dest);
+        } else if (file.fieldname.startsWith("speaker_photo_")) {
+          const dest = path.join(__dirname, "../public/photopath");
+          if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
+          cb(null, dest);
+        } else {
+          cb(new Error("Unexpected field: " + file.fieldname));
+        }
+      },
+      filename: function (req, file, cb) {
+        const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
+        cb(null, unique + path.extname(file.originalname));
+      },
+    });
+    const upload = multer({ storage: storage }).any(); // .any() agar semua file field diterima
+    upload(req, res, function (err) {
+      if (err) return res.status(400).json({ message: err.message });
+      next();
+    });
+  },
   async (req, res) => {
     const t = await require("../config/db").transaction();
     try {
@@ -258,8 +330,9 @@ router.post(
       if (typeof details === "string") details = JSON.parse(details);
       // Poster
       let poster_path = null;
-      if (req.file) {
-        poster_path = "/poster/" + req.file.filename;
+      if (req.files) {
+        const posterFile = req.files.find((f) => f.fieldname === "poster");
+        if (posterFile) poster_path = "/poster/" + posterFile.filename;
       }
       // 1. Insert ke tabel event
       const now = new Date();
@@ -293,7 +366,7 @@ router.post(
 
       // 3. Insert ke tabel event_detail dan speaker per sesi
       if (Array.isArray(details)) {
-        for (const det of details) {
+        for (const [i, det] of details.entries()) {
           // Insert event_detail
           const eventDetail = await EventDetail.create(
             {
@@ -308,18 +381,38 @@ router.post(
           );
           // Insert/relasi speakers untuk sesi ini
           if (Array.isArray(det.speakers) && det.speakers.length > 0) {
-            for (const spk of det.speakers) {
+            for (const [j, spk] of det.speakers.entries()) {
               let speakerInstance = null;
               if (spk.idspeaker && spk.idspeaker !== "__new__") {
                 // Pilih speaker lama
                 speakerInstance = await Speaker.findByPk(spk.idspeaker);
               } else if (spk.name) {
                 // Tambah speaker baru
+                let photo_path = null;
+                // Cari file upload untuk speaker baru jika ada
+                const fileKey = `speaker_photo_${i}_${j}`;
+                const fileObj = req.files.find((f) => f.fieldname === fileKey);
+                if (fileObj) {
+                  photo_path = "/photopath/" + fileObj.filename;
+                }
+                // Jika tidak ada file upload, cek fallback lama (jaga2)
+                if (
+                  !photo_path &&
+                  spk.photo_path &&
+                  spk.photo_path.startsWith("speaker_photo_")
+                ) {
+                  const fileObj2 = req.files.find(
+                    (f) => f.fieldname === spk.photo_path
+                  );
+                  if (fileObj2) {
+                    photo_path = "/photopath/" + fileObj2.filename;
+                  }
+                }
                 speakerInstance = await Speaker.create(
                   {
                     name: spk.name,
                     description: spk.description,
-                    photo_path: spk.photo_path,
+                    photo_path: photo_path,
                   },
                   { transaction: t }
                 );
@@ -664,58 +757,65 @@ router.get("/riwayat-pembayaran/user/:userId", async (req, res) => {
   }
 });
 
-router.get("/keuangan/riwayat-pembayaran", auth, role(["keuangan", "member"]), async (req, res) => {
-  try {
-    const data = await Registrasi.findAll({
-      subQuery: false,
-      include: [
-        {
-          model: User,
-          as: "user",
-          required: true,
-        },
-        {
-          model: Payment,
-          as: "payment",
-          required: true,
-        },
-        {
-          model: RegistrasiDetail,
-          as: "registrasiDetail",
-          include: [
-            {
-              model: EventDetail,
-              as: "eventDetail",
-              include: [
-                {
-                  model: Event,
-                  as: "event",
-                  include: [
-                    {
-                      model: Category,
-                      as: "categories",
-                      through: { attributes: [] },
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    });
+router.get(
+  "/keuangan/riwayat-pembayaran",
+  auth,
+  role(["keuangan", "member"]),
+  async (req, res) => {
+    try {
+      const data = await Registrasi.findAll({
+        subQuery: false,
+        include: [
+          {
+            model: User,
+            as: "user",
+            required: true,
+          },
+          {
+            model: Payment,
+            as: "payment",
+            required: true,
+          },
+          {
+            model: RegistrasiDetail,
+            as: "registrasiDetail",
+            include: [
+              {
+                model: EventDetail,
+                as: "eventDetail",
+                include: [
+                  {
+                    model: Event,
+                    as: "event",
+                    include: [
+                      {
+                        model: Category,
+                        as: "categories",
+                        through: { attributes: [] },
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
 
-    res.json(data);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      message: "Gagal mengambil data registrasi dengan payment",
-    });
+      res.json(data);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({
+        message: "Gagal mengambil data registrasi dengan payment",
+      });
+    }
   }
-});
+);
 
 router.get(
-  "/keuangan/riwayat-pembayaran-detail/:eventId/:userId", auth, role(["keuangan"]),
+  "/keuangan/riwayat-pembayaran-detail/:eventId/:userId",
+  auth,
+  role(["keuangan"]),
   async (req, res) => {
     try {
       const { userId, eventId } = req.params;

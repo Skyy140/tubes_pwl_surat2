@@ -17,6 +17,7 @@ app.use(cors()); // aktifkan CORS agar bisa diakses dari frontend
 app.use("/sertif", express.static(path.join(__dirname, "public/sertif")));
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 app.use("/poster", express.static(path.join(__dirname, "public/poster")));
+app.use("/photopath", express.static(path.join(__dirname, "public/photopath")));
 app.use("/", eventsRouter);
 
 const bodyParser = require("body-parser");

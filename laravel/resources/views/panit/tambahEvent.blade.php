@@ -210,7 +210,8 @@
                         </div>
                         <div class="form-group col-md-4">
                             <label>Photo Path</label>
-                            <input type="text" class="form-control speaker-photo-input" name="details[${detailIdx}][speakers][${idx}][photo_path]" required>
+                            <input type="file" accept="image/*" class="form-control speaker-photo-input" name="details[${detailIdx}][speakers][${idx}][photo_file]">
+                            <img class="speaker-photo-preview mt-2" style="max-width:80px;max-height:80px;display:none;" />
                         </div>
                     </div>
                     <button type="button" class="btn btn-danger btn-remove-speaker mt-2">Hapus Speaker</button>
@@ -230,31 +231,46 @@
                 const descInput = group.querySelector('.speaker-desc-input');
                 const photoInput = group.querySelector('.speaker-photo-input');
                 const nameInput = group.querySelector('.speaker-name-input');
+                const preview = group.querySelector('.speaker-photo-preview');
                 const selectedId = select.value;
                 if (selectedId === "__new__") {
                     nameInput.style.display = '';
                     nameInput.required = true;
                     descInput.value = '';
-                    photoInput.value = '';
                     descInput.readOnly = false;
-                    photoInput.readOnly = false;
+                    photoInput.value = '';
+                    photoInput.style.display = '';
+                    photoInput.required = true;
+                    preview.src = '#';
+                    preview.style.display = 'none';
                 } else if (selectedId) {
                     const spk = allSpeakers.find(s => s.idspeaker == selectedId);
                     if (spk) {
                         nameInput.style.display = 'none';
                         nameInput.required = false;
                         descInput.value = spk.description || '';
-                        photoInput.value = spk.photo_path || '';
                         descInput.readOnly = true;
-                        photoInput.readOnly = true;
+                        photoInput.value = '';
+                        photoInput.style.display = 'none';
+                        photoInput.required = false;
+                        if (spk.photo_path) {
+                            preview.src = "http://localhost:3000" + spk.photo_path;
+                            preview.style.display = 'block';
+                        } else {
+                            preview.src = '#';
+                            preview.style.display = 'none';
+                        }
                     }
                 } else {
                     nameInput.style.display = 'none';
                     nameInput.required = false;
                     descInput.value = '';
-                    photoInput.value = '';
                     descInput.readOnly = false;
-                    photoInput.readOnly = false;
+                    photoInput.value = '';
+                    photoInput.style.display = '';
+                    photoInput.required = false;
+                    preview.src = '#';
+                    preview.style.display = 'none';
                 }
             }
         });
@@ -276,6 +292,25 @@
                 preview.src = '#';
                 preview.style.display = 'none';
                 if (label) label.textContent = 'Pilih file gambar...';
+            }
+        });
+
+        // Event delegation untuk preview photo speaker
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('speaker-photo-input')) {
+                const file = e.target.files[0];
+                const preview = e.target.parentElement.querySelector('.speaker-photo-preview');
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(ev) {
+                        preview.src = ev.target.result;
+                        preview.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    preview.src = '#';
+                    preview.style.display = 'none';
+                }
             }
         });
 
@@ -333,7 +368,16 @@
                             const matches = input.name.match(/\[(\w+)\]$/);
                             if (matches) {
                                 const key = matches[1];
-                                speaker[key] = input.value;
+                                if (key === 'photo_file' && input.files && input.files[
+                                        0]) {
+                                    // Simpan nama file ke JSON, file ke FormData
+                                    const fileKey = `speaker_photo_${i}_${j}`;
+                                    speaker.photo_path = fileKey + '_' + input.files[0]
+                                        .name;
+                                    formData.append(fileKey, input.files[0]);
+                                } else if (key !== 'photo_file') {
+                                    speaker[key] = input.value;
+                                }
                             }
                         });
                     }

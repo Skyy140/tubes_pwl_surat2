@@ -15,7 +15,11 @@
                 <p><strong>Biaya:</strong> Rp {{ number_format($event['registration_fee'], 0, ',', '.') }}</p>
                 <p><strong>Peserta:</strong> {{ $event['max_participants'] }}</p>
                 <p><strong>Kategori:</strong>
-                    @foreach ($event['categories'] as $speaker){{ $speaker['name'] }}@if (!$loop->last), @endif @endforeach
+                    @foreach ($event['categories'] as $speaker)
+                        {{ $speaker['name'] }}@if (!$loop->last)
+                            ,
+                        @endif
+                    @endforeach
                 </p>
                 <p><strong>Keterangan:</strong> {{ $event['description'] }}</p>
                 <h4 class="mb-3"><i class="bi bi-person"></i> Pembicara</h4>
@@ -23,9 +27,14 @@
                     <p class="mb-3"><i class=""></i>
                         @foreach ($event['details'] as $detail)
                             @foreach ($detail['speakers'] as $speaker)
-                                {{ $speaker['name'] }}@if (!$loop->last)
-                                    ,
-                                @endif
+                                <div class="mb-3">
+                                    <div>{{ $speaker['name'] }}</div>
+                                    @if (!empty($speaker['photo_path']))
+                                        <img src="http://localhost:3000{{ $speaker['photo_path'] }}" class="card-img-top"
+                                            alt="{{ $speaker['name'] }}"
+                                            style="height: 200px; width : 300px; object-fit: cover;">
+                                    @endif
+                                </div>
                             @endforeach
                         @endforeach
                     </p>
@@ -40,12 +49,12 @@
         </section>
     </main>
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
+        document.addEventListener("DOMContentLoaded", function() {
             const token = localStorage.getItem("token");
 
             if (!token) {
                 document.querySelectorAll(".daftar-btn").forEach(btn => {
-                    btn.addEventListener("click", function (e) {
+                    btn.addEventListener("click", function(e) {
                         e.preventDefault();
 
                         Swal.fire({
