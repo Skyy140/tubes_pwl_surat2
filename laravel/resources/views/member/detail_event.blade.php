@@ -6,8 +6,9 @@
     <main class="main">
         <section class="section py-4">
             <div class="container">
-                <img src="/assets/img/services-1.jpg" class="card-img-top mb-4" alt="Event Image"
-                    style="max-height: 500px; object-fit: cover;">
+                <img src="http://localhost:3000{{ $event['poster_path'] }}" class="card-img-top mb-4" alt="Event Image"
+                    style="height: auto; max-width: 500px ;object-fit: cover; justify-content: center; align-items: center; display: flex; margin: 0 auto;
+                ;">
                 <h2 class="mb-3">{{ $event['name'] }}</h2>
                 <p><strong>Tanggal:</strong> {{ $event['date_start'] }} - {{ $event['date_end'] }}</p>
                 <p><strong>Jam:</strong> {{ $event['time'] }}</p>

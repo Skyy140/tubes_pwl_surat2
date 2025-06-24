@@ -5,8 +5,8 @@
 @section('content')
     <main class="main py-5">
         <div class="container">
-            <div id="profileMessage"></div> 
-            
+            <div id="profileMessage"></div>
+
             <h2 class="mb-4 fw-bold" id="eventTitle">Detail Event</h2>
             <div id="eventDetail"></div>
 
@@ -55,7 +55,8 @@
             }
 
             try {
-                const res = await fetch(`http://localhost:3000/api/events/event-detail-with-qr/${eventId}?userId=${userId}`);
+                const res = await fetch(
+                    `http://localhost:3000/api/events/event-detail-with-qr/${eventId}?userId=${userId}`);
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.message || 'Gagal ambil detail event');
 
@@ -65,22 +66,23 @@
                 // const sertifikatDownloadUrl = sertifikatPath
                 //     ? `http://localhost:3000/download/${sertifikatPath.split('/').pop()}`
                 //     : '#';
-                const attendance = data.registrasi?.registrasiDetail?.flatMap(detail => detail.hadir)?.find(a => a.certificate_path);
+                const attendance = data.registrasi?.registrasiDetail?.flatMap(detail => detail.hadir)?.find(a => a
+                    .certificate_path);
                 const sertifikatPath = attendance?.certificate_path;
 
                 const sertifikatUrl = sertifikatPath ? `http://localhost:3000${sertifikatPath}` : '#';
 
-                const qrCodePath = data.registrasi?.qr_code
-                    ? `http://localhost:3000${data.registrasi.qr_code}`
-                    : '';
+                const qrCodePath = data.registrasi?.qr_code ?
+                    `http://localhost:3000${data.registrasi.qr_code}` :
+                    '';
                 let html = `
                     <p><strong>Deskripsi:</strong> ${data.description || '-'}</p>
                     <p><strong>Tanggal:</strong> ${data.date_start || '-'} - ${data.date_end || '-'}</p>
                     <p><strong>Lokasi:</strong> ${data.location || '-'}</p>
                     ${qrCodePath ? `
-                        <p>QR KAMU</p>
-                        <img src="${qrCodePath}" alt="QR Code" style="max-width: 200px;">
-                    ` : '<p><em>Tidak ada QR</em></p>'}
+                            <p>QR</p>
+                            <img src="${qrCodePath}" alt="QR Code" style="max-width: 200px;">
+                        ` : '<p><em></em></p>'}
 
                     <table class="table table-bordered">
                         <thead>
@@ -102,19 +104,19 @@
                                 const certLink = certPath ? `<a href="http://localhost:3000${certPath}" target="_blank">Lihat</a>` : '-';
 
                                 return `
-                                    <tr>
-                                        <td>${i + 1}</td>
-                                        <td>${sesi.sesi}</td>
-                                        <td>${sesi.date}</td>
-                                        <td>${sesi.time_start} - ${sesi.time_end}</td>
-                                        <td>${certLink}</td>
-                                    </tr>
-                                `;
+                                        <tr>
+                                            <td>${i + 1}</td>
+                                            <td>${sesi.sesi}</td>
+                                            <td>${sesi.date}</td>
+                                            <td>${sesi.time_start} - ${sesi.time_end}</td>
+                                            <td>${certLink}</td>
+                                        </tr>
+                                    `;
                             }).join('')}
                         </tbody>
                     </table>
                 `;
-                
+
 
                 document.getElementById('eventDetail').innerHTML = html;
             } catch (err) {

@@ -103,7 +103,7 @@
                         <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="100">
                             <div class="card shadow-sm h-100 border-0 position-relative overflow-hidden">
                                 <div class="position-relative">
-                                    <img src="{{ asset('assets/img/services-1.jpg') }}" class="card-img-top"
+                                    <img src="http://localhost:3000{{ $event['poster_path'] }}" class="card-img-top"
                                         alt="Event Image">
                                     <div class="position-absolute top-0 start-0 m-2 d-flex flex-wrap gap-1">
                                         @if (!empty($event['categories']))
@@ -358,7 +358,7 @@
                                 div.innerHTML = `
                                                                             <div class="card shadow-sm h-100 border-0 position-relative overflow-hidden">
                                                                                 <div class="position-relative" >
-                                                                                    <img src="/assets/img/services-1.jpg" class="card-img-top" alt="Event Image">
+                                                                                    <img src="http://localhost:3000${event.poster_path}" class="card-img-top" alt="Event Image">
                                                                                     <div class="position-absolute top-0 start-0 m-2 d-flex flex-wrap gap-1">
                                                                                         ${categoryBadges}
                                                                                     </div>
